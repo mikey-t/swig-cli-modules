@@ -1,0 +1,14 @@
+{
+    "reporter": [
+        "text",
+        "lcov"
+    ],
+    "all": true,
+    "include": [
+        "src/modules/**/*.ts",
+        "src/utils/**/*.ts"
+    ],
+    "exclude": [
+        "**/index.ts"
+    ]
+}

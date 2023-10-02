@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "types": [
+      "node"
+    ],
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "rootDir": "."
+  },
+  "include": [
+    "swigfile.ts",
+    "src/**/*.ts",
+    "test/**/*.ts"
+  ],
+  "exclude": [
+    ".vscode",
+    "coverage",
+    "dist",
+    "docs",
+    "node_modules",
+    "test/fixtures",
+    "test/temp"
+  ],
+  "ts-node": {
+    "transpileOnly": true
+  }
+}

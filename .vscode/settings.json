@@ -1,0 +1,19 @@
+{
+    "[typescript]": {
+      "editor.autoIndent": "full",
+      "editor.trimAutoWhitespace": false
+    },
+    "[javascript]": {
+      "editor.autoIndent": "full",
+      "editor.trimAutoWhitespace": false
+    },
+    "javascript.preferences.quoteStyle": "single",
+    "typescript.preferences.quoteStyle": "single",
+    "javascript.format.semicolons": "remove",
+    "typescript.format.semicolons": "remove",
+    "cSpell.words": [
+      "lcov",
+      "nodb"
+    ]
+  }
+  

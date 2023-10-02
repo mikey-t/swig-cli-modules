@@ -1,0 +1,94 @@
+{
+  "name": "swig-cli-modules",
+  "version": "0.0.1",
+  "description": "Groups of swig tasks for use in other projects",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mikey-t/swig-cli-modules"
+  },
+  "type": "module",
+  "exports": {
+    "./config": {
+      "import": {
+        "types": "./dist/esm/config/index.d.ts",
+        "default": "./dist/esm/config/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/config/index.d.ts",
+        "default": "./dist/cjs/config/index.js"
+      }
+    },
+    "./utils": {
+      "import": {
+        "types": "./dist/esm/utils/index.d.ts",
+        "default": "./dist/esm/utils/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/utils/index.d.ts",
+        "default": "./dist/cjs/utils/index.js"
+      }
+    },
+    "./DotnetReactSandbox": {
+      "import": {
+        "types": "./dist/esm/modules/DotnetReactSandbox/SwigDotnetReactSandbox.d.ts",
+        "default": "./dist/esm/modules/DotnetReactSandbox/SwigDotnetReactSandbox.js"
+      },
+      "require": {
+        "types": "./dist/cjs/modules/DotnetReactSandbox/SwigDotnetReactSandbox.d.ts",
+        "default": "./dist/cjs/modules/DotnetReactSandbox/SwigDotnetReactSandbox.js"
+      }
+    },
+    "./DockerCompose": {
+      "import": {
+        "types": "./dist/esm/modules/DockerCompose/SwigDockerCompose.d.ts",
+        "default": "./dist/esm/modules/DockerCompose/SwigDockerCompose.js"
+      },
+      "require": {
+        "types": "./dist/cjs/modules/DockerCompose/SwigDockerCompose.d.ts",
+        "default": "./dist/cjs/modules/DockerCompose/SwigDockerCompose.js"
+      }
+    },
+    "./EntityFramework": {
+      "import": {
+        "types": "./dist/esm/modules/EntityFramework/SwigEntityFramework.d.ts",
+        "default": "./dist/esm/modules/EntityFramework/SwigEntityFramework.js"
+      },
+      "require": {
+        "types": "./dist/cjs/modules/EntityFramework/SwigEntityFramework.d.ts",
+        "default": "./dist/cjs/modules/EntityFramework/SwigEntityFramework.js"
+      }
+    }
+  },
+  "scripts": {},
+  "files": [
+    "dist/",
+    "readme.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "swig",
+    "swig-cli",
+    "swig-cli-modules",
+    "dotnet-react-sandbox"
+  ],
+  "author": "Mike Thompson",
+  "license": "MIT",
+  "dependencies": {
+    "@mikeyt23/node-cli-utils": "^2.0.0-beta.3",
+    "dotenv": "^16.3.1",
+    "swig-cli": "^0.0.14"
+  },
+  "devDependencies": {
+    "@types/node": "^18.18.1",
+    "@typescript-eslint/eslint-plugin": "^6.7.3",
+    "@typescript-eslint/parser": "^6.7.3",
+    "c8": "^8.0.1",
+    "eslint": "^8.50.0",
+    "ts-node": "^10.9.1",
+    "tsx": "^3.13.0",
+    "typescript": "^5.2.2"
+  },
+  "volta": {
+    "node": "18.18.0"
+  }
+}

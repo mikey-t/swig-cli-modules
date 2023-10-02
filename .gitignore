@@ -1,0 +1,7 @@
+.env
+.idea
+dist
+node_modules
+test/temp/*
+!test/temp/placeholder.txt
+coverage
