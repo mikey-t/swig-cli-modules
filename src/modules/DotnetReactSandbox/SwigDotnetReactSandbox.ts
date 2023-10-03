@@ -303,7 +303,7 @@ async function setupHostsEntry() {
 }
 
 async function checkDependenciesForTeardown() {
-  if (!await drsConfig.dependencyChecker!.hasElevatedPermissions()) {
+  if (!await drsConfig.getDependencyChecker().hasElevatedPermissions()) {
     throw new Error('Elevated permissions are required to run teardown')
   }
 }
