@@ -187,7 +187,7 @@ async function doBuildClient() {
 
 async function doBuildServer() {
   log('emptying build directory')
-  await nodeCliUtils.emptyDirectory(drsConfig.buildDir, ['wwwroot'])
+  await nodeCliUtils.emptyDirectory(drsConfig.buildDir, { fileAndDirectoryNamesToSkip: ['wwwroot'] })
   log('building server')
   await dotnetUtils.dotnetPublish(drsConfig.serverCsprojPath, 'Release', drsConfig.buildDir)
 }
