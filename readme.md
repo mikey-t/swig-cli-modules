@@ -8,7 +8,7 @@ Example use: https://github.com/mikey-t/dotnet-react-sandbox ([swigfile.ts](http
 
 ## Basic Info and Example
 
-[Swig](https://github.com/mikey-t/swig) is a CLI script that can execute any exported function from a swigfile (which is just a plain javascript or typescript file). To reduce repetition across projects, a "swig cli module" can be created in order to group together related tasks in order to reduce repetition across projects.
+[Swig](https://github.com/mikey-t/swig) is a CLI script that can execute any exported function from a swigfile (which is just a plain javascript or typescript file). To reduce repetition across projects, a "swig cli module" can be created in order to group together related tasks.
 
 A medium-sized project like [dotnet-react-sandbox](https://github.com/mikey-t/dotnet-react-sandbox) might end up having a lot of dev automation tasks spanning several different types of activities. Rather than copy/paste what would normally be a relatively large `swigfile.ts` to each project that is based on the dotnet-react-sandbox template, we can encapsulate the functionality in a swig cli module and then import, configure and re-export all the relevant functions. This is the entire [swigfile.ts](https://github.com/mikey-t/dotnet-react-sandbox/blob/main/swigfile.ts) for a dotnet-react-sandbox project:
 
