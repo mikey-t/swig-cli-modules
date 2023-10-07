@@ -10,6 +10,11 @@ class SwigEntityFrameworkConfig {
   dbMigratorPath: string | undefined
   dbContexts: DbContextConfig[] = []
 
+  init(dbMigrationPath: string, dbContexts: DbContextConfig[]) {
+    this.dbMigratorPath = dbMigrationPath
+    this.dbContexts = dbContexts
+  }
+
   throwIfInvalid() {
     if (!this.dbMigratorPath) {
       throw new Error('swigEntityFrameworkConfig.dbMigratorPath is required')
@@ -23,4 +28,23 @@ class SwigEntityFrameworkConfig {
   }
 }
 
-export const swigEntityFrameworkConfig = new SwigEntityFrameworkConfig()
+/**
+ * Example setup:
+ * 
+ * @example
+ * 
+ * ```
+ * import efConfig from 'swig-cli-modules/config/EntityFramework'
+ * 
+ * efConfig.init(
+ *   './server/src/DbMigrator',
+ *   [
+ *     { name: 'MainDbContext', cliKey: 'main', useWhenNoContextSpecified: true },
+ *     { name: 'TestDbContext', cliKey: 'test' }
+ *   ]
+ * )
+ * ```
+ */
+const swigEntityFrameworkConfig = new SwigEntityFrameworkConfig()
+
+export default swigEntityFrameworkConfig

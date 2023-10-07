@@ -2,4 +2,9 @@ class SwigDockerConfig {
   dockerComposePath: string = './docker-compose.yml'
 }
 
-export const swigDockerConfig = new SwigDockerConfig()
+/**
+ * You only need to import this config if you need to change the default docker compose path (`./docker-compose.yml`).
+ */
+const swigDockerConfig = new SwigDockerConfig()
+
+export default swigDockerConfig

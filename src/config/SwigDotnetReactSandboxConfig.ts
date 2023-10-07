@@ -103,4 +103,6 @@ class SwigDotnetReactSandboxConfig {
  * export * from 'swig-cli-modules/DotnetReactSandbox'
  * ```
  */
-export const dotnetReactSandboxConfig = new SwigDotnetReactSandboxConfig()
+const dotnetReactSandboxConfig = new SwigDotnetReactSandboxConfig()
+
+export default dotnetReactSandboxConfig

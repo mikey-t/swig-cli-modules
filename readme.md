@@ -14,15 +14,11 @@ A medium-sized project like [dotnet-react-sandbox](https://github.com/mikey-t/do
 
 ```javascript
 import dotenv from 'dotenv'
-import { dotnetReactSandboxConfig } from 'swig-cli-modules/config'
+import config from 'swig-cli-modules/config/DotnetReactSandbox'
 
-dotenv.config()
-
-dotnetReactSandboxConfig.projectName = process.env.PROJECT_NAME ?? 'drs'
-dotnetReactSandboxConfig.loadEnvFunction = dotenv.config
+config.init(dotenv.config)
 
 export * from 'swig-cli-modules/DotnetReactSandbox'
-
 ```
 
 ## Customization
@@ -31,9 +27,6 @@ If you want to run another task before a task from the swig cli module, you can 
 
 ```javascript
 import * as swigDocker from 'swig-cli-modules/DockerCompose'
-import { swigDockerConfig } from 'swig-cli-modules/config/SwigDockerComposeConfig.js'
-
-swigDockerConfig.dockerComposePath = './docker-compose.yml'
 
 async function runThisFirst() {
   // Do stuff

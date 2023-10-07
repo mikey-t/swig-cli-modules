@@ -10,9 +10,9 @@ import fsp from 'node:fs/promises'
 import path from 'node:path'
 import { parallel, series } from 'swig-cli'
 import * as swigEf from '../EntityFramework/SwigEntityFramework.js'
-import { swigEntityFrameworkConfig } from '../../config/SwigEntityFrameworkConfig.js'
-import { swigDockerConfig } from '../../config/SwigDockerComposeConfig.js'
-import { dotnetReactSandboxConfig as drsConfig } from '../../config/SwigDotnetReactSandboxConfig.js'
+import efConfig from '../../config/SwigEntityFrameworkConfig.js'
+import swigDockerConfig from '../../config/SwigDockerComposeConfig.js'
+import drsConfig from '../../config/SwigDotnetReactSandboxConfig.js'
 import { conditionally, getRequireSecondParam } from '../../utils/generalUtils.js'
 import * as swigDocker from '../DockerCompose/SwigDockerCompose.js'
 
@@ -20,11 +20,13 @@ import * as swigDocker from '../DockerCompose/SwigDockerCompose.js'
 swigDockerConfig.dockerComposePath = drsConfig.dockerComposePath
 
 // Setup swig cli module EntityFramework
-swigEntityFrameworkConfig.dbMigratorPath = drsConfig.dbMigratorPath
-swigEntityFrameworkConfig.dbContexts = [
-  { name: 'MainDbContext', cliKey: 'main', useWhenNoContextSpecified: true },
-  { name: 'TestDbContext', cliKey: 'test' }
-]
+efConfig.init(
+  drsConfig.dbMigratorPath,
+  [
+    { name: 'MainDbContext', cliKey: 'main', useWhenNoContextSpecified: true },
+    { name: 'TestDbContext', cliKey: 'test' }
+  ]
+)
 
 export const setup = series(
   syncEnvFiles,
