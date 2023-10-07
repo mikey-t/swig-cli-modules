@@ -3,8 +3,7 @@ import SandboxDependencyChecker from '../modules/DotnetReactSandbox/SandboxDepen
 import { getRequiredEnvVar } from '@mikeyt23/node-cli-utils'
 
 class SwigDotnetReactSandboxConfig {
-  // Need a placeholder for first run before first syncEnvFiles call and generation of .env file
-  projectName = process.env.PROJECT_NAME ?? 'drs'
+  projectName = 'set_project_name_env_and_call_config_init'
 
   buildDir = './build'
   buildWwwrootDir = `${this.buildDir}/wwwroot`
@@ -16,7 +15,7 @@ class SwigDotnetReactSandboxConfig {
   dbMigratorPath = 'server/src/DbMigrator/'
   dbContainerName = 'postgresql'
 
-  releaseTarballName = `${this.projectName}.tar.gz`
+  releaseTarballName: string = `set_project_name_env_and_call_config_init`
   dbMigratorTarballName = 'DbMigrator.tar.gz'
   dockerComposePath = `${this.dockerPath}/docker-compose.yml`
   serverCsprojPath = `${this.serverPath}/WebServer.csproj`
@@ -35,13 +34,25 @@ class SwigDotnetReactSandboxConfig {
   private siteUrl: string | undefined = undefined
 
   constructor() {
-    if (process.argv[3] && process.argv[3].toLowerCase() === 'nodb') {
-      this.noDb = true
+    this.populateCommonCliArgs()
+  }
+
+  init(loadEnvFunction: () => void) {
+    this.loadEnvFunction = loadEnvFunction
+    loadEnvFunction()
+    const projectNameFromEnv = process.env.PROJECT_NAME
+    if (projectNameFromEnv) {
+      this.setProjectNameFields(projectNameFromEnv)
     }
   }
 
-  setOptions(options: Partial<SwigDotnetReactSandboxConfig>) {
-    Object.assign(this, options)
+  /**
+   * Call this to update projectName and releaseTarballName at the same time.
+   * @param newProjectName The projectName to use.
+   */
+  setProjectNameFields(newProjectName: string) {
+    this.projectName = newProjectName
+    this.releaseTarballName = `${this.projectName}.tar.gz`
   }
 
   getDependencyChecker(): SandboxDependencyChecker {
@@ -58,16 +69,38 @@ class SwigDotnetReactSandboxConfig {
     return this.projectSetupUtil
   }
 
+  // Lazy load this from env
   getSiteUrl(): string {
     if (!this.siteUrl) {
       this.siteUrl = getRequiredEnvVar('SITE_URL')
     }
     return this.siteUrl
   }
-  
+
   getNoDbVal(): boolean {
     return this.noDb
   }
+
+  private populateCommonCliArgs() {
+    if (process.argv[3] && process.argv[3].toLowerCase() === 'nodb') {
+      this.noDb = true
+    }
+  }
 }
 
+/**
+ * Most of these config values are not meant to be changed. The `projectName` is the main property that will always be different in each project,
+ * but that should get pulled in from an env var `PROJECT_NAME`. Under normal circumstances your swigfile will look like this:
+ * 
+ * @example
+ * 
+ * ```
+ * import dotenv from 'dotenv'
+ * import { dotnetReactSandboxConfig } from 'swig-cli-modules/config'
+ * 
+ * dotnetReactSandboxConfig.init(dotenv.config)
+ * 
+ * export * from 'swig-cli-modules/DotnetReactSandbox'
+ * ```
+ */
 export const dotnetReactSandboxConfig = new SwigDotnetReactSandboxConfig()

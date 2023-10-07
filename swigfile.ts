@@ -78,6 +78,13 @@ export async function testCoverageAll() {
   await testCoverage(adminTestFiles)
 }
 
+export async function watchEsm() {
+  await cleanDist()
+  await spawnAsyncLongRunning('node', [tscPath, '--p', 'tsconfig.esm.json', '--watch'])
+}
+
+export const publish = series(lint, build, test, () => spawnAsync('npm', ['publish'], { throwOnNonZero: true }))
+
 async function buildEsm() {
   log('Building ESM')
   await spawnAsync('node', [tscPath, '--p', 'tsconfig.esm.json'], { throwOnNonZero: true })
@@ -90,9 +97,4 @@ async function buildCjs() {
 
 async function copyCjsPackageJson() {
   await fsp.copyFile('./package.cjs.json', './dist/cjs/package.json')
-}
-
-export async function watchEsm() {
-  await cleanDist()
-  await spawnAsyncLongRunning('node', [tscPath, '--p', 'tsconfig.esm.json', '--watch'])
 }
