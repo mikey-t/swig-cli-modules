@@ -1,6 +1,6 @@
 {
   "name": "swig-cli-modules",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Groups of swig tasks for use in other projects",
   "repository": {
     "type": "git",
@@ -8,7 +8,7 @@
   },
   "type": "module",
   "exports": {
-    "./config/DockerCompose": {
+    "./ConfigDockerCompose": {
       "import": {
         "types": "./dist/esm/config/SwigDockerComposeConfig.d.ts",
         "default": "./dist/esm/config/SwigDockerComposeConfig.js"
@@ -18,7 +18,7 @@
         "default": "./dist/cjs/config/SwigDockerComposeConfig.js"
       }
     },
-    "./config/DotnetReactSandbox": {
+    "./ConfigDotnetReactSandbox": {
       "import": {
         "types": "./dist/esm/config/SwigDotnetReactSandboxConfig.d.ts",
         "default": "./dist/esm/config/SwigDotnetReactSandboxConfig.js"
@@ -28,7 +28,7 @@
         "default": "./dist/cjs/config/SwigDotnetReactSandboxConfig.js"
       }
     },
-    "./config/EntityFramework": {
+    "./ConfigEntityFramework": {
       "import": {
         "types": "./dist/esm/config/SwigEntityFrameworkConfig.d.ts",
         "default": "./dist/esm/config/SwigEntityFrameworkConfig.js"

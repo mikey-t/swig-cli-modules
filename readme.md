@@ -14,7 +14,7 @@ A medium-sized project like [dotnet-react-sandbox](https://github.com/mikey-t/do
 
 ```javascript
 import dotenv from 'dotenv'
-import config from 'swig-cli-modules/config/DotnetReactSandbox'
+import config from 'swig-cli-modules/ConfigDotnetReactSandbox'
 
 config.init(dotenv.config)
 
