@@ -9,36 +9,22 @@ import fs from 'node:fs'
 import fsp from 'node:fs/promises'
 import path from 'node:path'
 import { parallel, series } from 'swig-cli'
-import * as swigEf from '../EntityFramework/SwigEntityFramework.js'
-import efConfig from '../../config/SwigEntityFrameworkConfig.js'
-import swigDockerConfig from '../../config/SwigDockerComposeConfig.js'
-import drsConfig from '../../config/SwigDotnetReactSandboxConfig.js'
+import config from '../../config/singleton/DotnetReactSandboxConfigSingleton.js'
 import { conditionally, getRequireSecondParam } from '../../utils/generalUtils.js'
-import * as swigDocker from '../DockerCompose/SwigDockerCompose.js'
-
-// Setup swig cli module DockerCompose
-swigDockerConfig.dockerComposePath = drsConfig.dockerComposePath
-
-// Setup swig cli module EntityFramework
-efConfig.init(
-  drsConfig.dbMigratorPath,
-  [
-    { name: 'MainDbContext', cliKey: 'main', useWhenNoContextSpecified: true },
-    { name: 'TestDbContext', cliKey: 'test' }
-  ]
-)
+import * as swigDocker from '../DockerCompose/DockerCompose.js'
+import * as swigEf from '../EntityFramework/EntityFramework.js'
 
 export const setup = series(
   syncEnvFiles,
   checkDependenciesForSetup,
   setupCert,
   setupHostsEntry,
-  ['dockerUp', () => conditionally(!drsConfig.getNoDbVal(), swigDocker.dockerUp)],
+  ['dockerUp', () => conditionally(!config.nodb, swigDocker.dockerUp)],
   ['dbInitialCreate', () => conditionally(
-    !drsConfig.getNoDbVal(),
+    !config.nodb,
     () => nodeCliUtils.withRetryAsync(() => dbMigratorCliCommand('dbInitialCreate'), 5, 3000, { initialDelayMilliseconds: 10000, functionLabel: 'dbInitialCreate' }))
   ],
-  ['dbMigrate', () => conditionally(!drsConfig.getNoDbVal(), () => swigEf.executeEfAction('update', ['main', 'test']))]
+  ['dbMigrate', () => conditionally(!config.nodb, () => swigEf.executeEfAction('update', ['main', 'test']))]
 )
 
 export const setupStatus = series(
@@ -83,7 +69,7 @@ export const dbMigrate = series(syncEnvFiles, swigEf.dbMigrate)
 export const dbAddMigration = series(syncEnvFiles, swigEf.addMigration)
 export const dbRemoveMigration = series(syncEnvFiles, swigEf.removeMigration)
 
-export const bashIntoDb = series(syncEnvFiles, ['bashIntoContainer', () => swigDocker.bashIntoContainer(drsConfig.dbContainerName)])
+export const bashIntoDb = series(syncEnvFiles, ['bashIntoContainer', () => swigDocker.bashIntoContainer(config.dbContainerName)])
 
 export const installOrUpdateDotnetEfTool = dotnetUtils.installOrUpdateDotnetEfTool
 export const configureDotnetDevCerts = dotnetUtils.configureDotnetDevCerts
@@ -112,22 +98,22 @@ export async function syncEnvFiles() {
   await nodeCliUtils.copyNewEnvValues(`${rootEnvPath}.template`, rootEnvPath)
 
   // Load env vars from root .env file into process.env in case this is the first run or if there are new vars copied over from .env.template.
-  drsConfig.loadEnvFunction()
+  config.loadEnvFunction()
 
-  await nodeCliUtils.ensureDirectory(drsConfig.buildWwwrootDir)
-  for (const dir of drsConfig.directoriesWithEnv) {
-    await nodeCliUtils.overwriteEnvFile(rootEnvPath, path.join(dir, '.env'), dir === drsConfig.serverTestPath)
+  await nodeCliUtils.ensureDirectory(config.buildWwwrootDir)
+  for (const dir of config.directoriesWithEnv) {
+    await nodeCliUtils.overwriteEnvFile(rootEnvPath, path.join(dir, '.env'), dir === config.serverTestPath)
   }
   await nodeCliUtils.copyModifiedEnv(
     rootEnvPath,
-    `${drsConfig.serverTestPath}/.env`,
+    `${config.serverTestPath}/.env`,
     ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'],
     { 'DB_NAME': `test_${process.env.DB_NAME || 'DB_NAME_MISSING_FROM_PROCESS_ENV'}` }
   )
 }
 
 export async function deleteEnvCopies() {
-  for (const dir of drsConfig.directoriesWithEnv) {
+  for (const dir of config.directoriesWithEnv) {
     const envPath = path.join(dir, '.env')
     if (fs.existsSync(envPath)) {
       log('deleting .env file at path', envPath)
@@ -163,91 +149,95 @@ export async function linuxInstallCert() {
   certUtils.linuxInstallCert() // This doesn't actually install anything - it just dumps out instructions for how to do it manually...
 }
 
+export async function showConfig() {
+  console.log(JSON.stringify(config, null, 2))
+}
+
 // End exported functions //
 //**************************
 // Start helper functions //
 
 async function runServer() {
   const command = 'dotnet'
-  const args = ['watch', '--project', drsConfig.serverCsprojPath]
+  const args = ['watch', '--project', config.serverCsprojPath]
   await nodeCliUtils.spawnAsyncLongRunning(command, args)
 }
 
 async function runClient() {
   const command = 'node'
   const args = ['./node_modules/vite/bin/vite.js', 'dev']
-  await nodeCliUtils.spawnAsyncLongRunning(command, args, drsConfig.clientPath)
+  await nodeCliUtils.spawnAsyncLongRunning(command, args, config.clientPath)
 }
 
 async function doTestServer() {
-  await nodeCliUtils.spawnAsyncLongRunning('dotnet', ['test'], drsConfig.serverTestPath)
+  await nodeCliUtils.spawnAsyncLongRunning('dotnet', ['test'], config.serverTestPath)
 }
 
 async function doBuildClient() {
-  await nodeCliUtils.spawnAsync('npm', ['run', 'build', '--omit=dev'], { cwd: drsConfig.clientPath })
+  await nodeCliUtils.spawnAsync('npm', ['run', 'build', '--omit=dev'], { cwd: config.clientPath })
 }
 
 async function doBuildServer() {
   log('emptying build directory')
-  await nodeCliUtils.emptyDirectory(drsConfig.buildDir, { fileAndDirectoryNamesToSkip: ['wwwroot'] })
+  await nodeCliUtils.emptyDirectory(config.buildDir, { fileAndDirectoryNamesToSkip: ['wwwroot'] })
   log('building server')
-  await dotnetUtils.dotnetPublish(drsConfig.serverCsprojPath, 'Release', drsConfig.buildDir)
+  await dotnetUtils.dotnetPublish(config.serverCsprojPath, 'Release', config.buildDir)
 }
 
 async function ensureReleaseDir() {
-  await nodeCliUtils.ensureDirectory(drsConfig.releaseDir)
+  await nodeCliUtils.ensureDirectory(config.releaseDir)
 }
 
 async function doBuildDbMigrator() {
-  const publishDir = path.join(drsConfig.dbMigratorPath, 'publish')
-  await dotnetUtils.dotnetPublish(drsConfig.dbMigratorPath, 'Release', publishDir)
+  const publishDir = path.join(config.dbMigratorPath, 'publish')
+  await dotnetUtils.dotnetPublish(config.dbMigratorPath, 'Release', publishDir)
   await nodeCliUtils.deleteEnvIfExists(path.join(publishDir, '.env'))
   return publishDir
 }
 
 async function doCreateDbMigratorRelease() {
   const publishDir = await doBuildDbMigrator()
-  const tarballPath = path.join(drsConfig.releaseDir, drsConfig.dbMigratorTarballName)
+  const tarballPath = path.join(config.releaseDir, config.dbMigratorTarballName)
   if (fs.existsSync(tarballPath)) {
     log(`deleting existing tarball before re-creating: ${tarballPath}`)
     await fsp.unlink(tarballPath)
   }
-  await nodeCliUtils.createTarball(publishDir, path.join(drsConfig.releaseDir, drsConfig.dbMigratorTarballName), { excludes: ['.env'] })
+  await nodeCliUtils.createTarball(publishDir, path.join(config.releaseDir, config.dbMigratorTarballName), { excludes: ['.env'] })
 }
 
 async function doCopyClientBuild() {
-  await nodeCliUtils.copyDirectoryContents(path.join(drsConfig.clientPath, 'dist'), drsConfig.buildWwwrootDir)
+  await nodeCliUtils.copyDirectoryContents(path.join(config.clientPath, 'dist'), config.buildWwwrootDir)
 }
 
 async function createReleaseTarball() {
-  const tarballPath = path.join(drsConfig.releaseDir, drsConfig.releaseTarballName)
+  const tarballPath = path.join(config.releaseDir, config.releaseTarballName)
   if (fs.existsSync(tarballPath)) {
     log(`deleting existing tarball before re-creating: ${tarballPath}`)
     await fsp.unlink(tarballPath)
   }
-  await nodeCliUtils.createTarball(drsConfig.buildDir, path.join(drsConfig.releaseDir, drsConfig.releaseTarballName), { excludes: ['.env'] })
+  await nodeCliUtils.createTarball(config.buildDir, path.join(config.releaseDir, config.releaseTarballName), { excludes: ['.env'] })
 }
 
 type DbMigratorCommand = 'dbInitialCreate' | 'dbDropAll' | 'dbDropAndRecreate'
 
 async function dbMigratorCliCommand(command: DbMigratorCommand) {
   if (command === 'dbInitialCreate') {
-    const result = await nodeCliUtils.spawnAsync('dotnet', ['run', '--project', drsConfig.dbMigratorPath, 'dbInitialCreate'])
+    const result = await nodeCliUtils.spawnAsync('dotnet', ['run', '--project', config.dbMigratorPath, 'dbInitialCreate'])
     if (result.code !== 0) {
       throw new Error(`dbInitialCreate failed with exit code ${result.code}`)
     }
     return
   }
   if (command === 'dbDropAll' && await nodeCliUtils.getConfirmation('Are you sure you want to drop main and test databases and database user?')) {
-    await nodeCliUtils.spawnAsync('dotnet', ['run', '--project', drsConfig.dbMigratorPath, 'dbDropAll'], { throwOnNonZero: true })
+    await nodeCliUtils.spawnAsync('dotnet', ['run', '--project', config.dbMigratorPath, 'dbDropAll'], { throwOnNonZero: true })
     return
   }
   if (command === 'dbDropAndRecreate') {
     if (!await nodeCliUtils.getConfirmation('Are you sure you want to drop main and test databases and database user?')) {
       return
     } else {
-      await nodeCliUtils.spawnAsync('dotnet', ['run', '--project', drsConfig.dbMigratorPath, 'dbDropAll'], { throwOnNonZero: true })
-      await nodeCliUtils.spawnAsync('dotnet', ['run', '--project', drsConfig.dbMigratorPath, 'dbInitialCreate'], { throwOnNonZero: true })
+      await nodeCliUtils.spawnAsync('dotnet', ['run', '--project', config.dbMigratorPath, 'dbDropAll'], { throwOnNonZero: true })
+      await nodeCliUtils.spawnAsync('dotnet', ['run', '--project', config.dbMigratorPath, 'dbInitialCreate'], { throwOnNonZero: true })
       return
     }
   }
@@ -255,22 +245,22 @@ async function dbMigratorCliCommand(command: DbMigratorCommand) {
 }
 
 async function doRunBuilt() {
-  const buildEnvPath = path.join(drsConfig.buildDir, '.env')
+  const buildEnvPath = path.join(config.buildDir, '.env')
   await fsp.writeFile(buildEnvPath, '\nASPNETCORE_ENVIRONMENT=Production', { flag: 'a' })
-  await fsp.writeFile(buildEnvPath, `\nPRE_DEPLOY_HTTP_PORT=${drsConfig.preDeployHttpPort}`, { flag: 'a' })
-  await fsp.writeFile(buildEnvPath, `\nPRE_DEPLOY_HTTPS_PORT=${drsConfig.preDeployHttpsPort}`, { flag: 'a' })
+  await fsp.writeFile(buildEnvPath, `\nPRE_DEPLOY_HTTP_PORT=${config.preDeployHttpPort}`, { flag: 'a' })
+  await fsp.writeFile(buildEnvPath, `\nPRE_DEPLOY_HTTPS_PORT=${config.preDeployHttpsPort}`, { flag: 'a' })
   const siteUrl = nodeCliUtils.getRequiredEnvVar('SITE_URL')
   const devCertName = `${siteUrl}.pfx`
   const certSourcePath = path.join('./cert/', devCertName)
-  const certDestinationPath = path.join(drsConfig.buildDir, devCertName)
+  const certDestinationPath = path.join(config.buildDir, devCertName)
   await fsp.copyFile(certSourcePath, certDestinationPath)
   await nodeCliUtils.spawnAsyncLongRunning('dotnet', ['WebServer.dll', '--launch-profile', '"PreDeploy"'], './build/')
 }
 
 async function checkDependenciesForSetup() {
-  const depsChecker = drsConfig.getDependencyChecker()
+  const depsChecker = config.dependencyChecker
   let report = await depsChecker.getReport()
-  if (drsConfig.getNoDbVal()) {
+  if (config.nodb) {
     report = report.filter(({ key }) => key !== 'DB_PORT is available')
   }
   log(depsChecker.getFormattedReport(report))
@@ -282,44 +272,44 @@ async function checkDependenciesForSetup() {
 }
 
 async function reportSetupStatus() {
-  const depsChecker = drsConfig.getDependencyChecker()
+  const depsChecker = config.dependencyChecker
   const dependenciesReport = await depsChecker.getReport()
   log('Checking dependencies:')
   log(depsChecker.getFormattedReport(dependenciesReport, true, ['Elevated Permissions', 'DB_PORT is available', 'DEV_CLIENT_PORT is available', 'DEV_SERVER_PORT is available']))
 
   log('Checking cert and hosts setup:')
-  const hostname = nodeCliUtils.getHostname(drsConfig.getSiteUrl())
+  const hostname = nodeCliUtils.getHostname(config.siteUrl)
   const certFileStatus = { key: 'Cert file exists', value: fs.existsSync(`./cert/${hostname}.pfx`) }
   const certInstalledStatus = { key: 'Cert installed', value: await certUtils.winCertIsInstalled(hostname) }
-  const hostsStatus = { key: 'Hosts entry exists', value: await nodeCliUtils.hostsFileHasEntry(drsConfig.getSiteUrl()) }
+  const hostsStatus = { key: 'Hosts entry exists', value: await nodeCliUtils.hostsFileHasEntry(config.siteUrl) }
   const othersReport: StringBoolArray = [certFileStatus, certInstalledStatus, hostsStatus]
   log(depsChecker.getFormattedReport(othersReport))
 }
 
 async function setupCert() {
-  await drsConfig.getProjectSetupUtil().ensureCertSetup(drsConfig.getSiteUrl())
+  await config.projectSetupUtil.ensureCertSetup(config.siteUrl)
 }
 
 async function setupHostsEntry() {
-  await nodeCliUtils.ensureHostsEntry(drsConfig.getSiteUrl())
+  await nodeCliUtils.ensureHostsEntry(config.siteUrl)
 }
 
 async function checkDependenciesForTeardown() {
-  if (!await drsConfig.getDependencyChecker().hasElevatedPermissions()) {
+  if (!await config.dependencyChecker.hasElevatedPermissions()) {
     throw new Error('Elevated permissions are required to run teardown')
   }
 }
 
 async function teardownCert() {
-  await drsConfig.getProjectSetupUtil().teardownCertSetup(drsConfig.getSiteUrl())
+  await config.projectSetupUtil.teardownCertSetup(config.siteUrl)
 }
 
 async function teardownHostsEntry() {
-  await nodeCliUtils.removeHostsEntry(drsConfig.getSiteUrl())
+  await nodeCliUtils.removeHostsEntry(config.siteUrl)
 }
 
 async function teardownDb() {
-  if (drsConfig.getNoDbVal()) {
+  if (config.nodb) {
     log('"nodb" option recognized - skipping DB teardown')
     return
   }

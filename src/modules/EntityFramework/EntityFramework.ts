@@ -1,8 +1,8 @@
 import { log } from '@mikeyt23/node-cli-utils'
-import { dotnetBuild } from '@mikeyt23/node-cli-utils/dotnetUtils'
 import { efAddMigration, efMigrationsList, efMigrationsUpdate, efRemoveLastMigration } from '@mikeyt23/node-cli-utils/dbMigrationUtils'
-import config from '../../config/SwigEntityFrameworkConfig.js'
-import { DbContextConfig } from '../../config/SwigEntityFrameworkConfig.js'
+import { dotnetBuild } from '@mikeyt23/node-cli-utils/dotnetUtils'
+import { DbContextConfig } from '../../config/EntityFrameworkConfig.js'
+import config from '../../config/singleton/EntityFrameworkConfigSingleton.js'
 
 export async function listMigrations() {
   logDbCommandMessage('Listing migrations', getDbContextNamesToOperateOn())

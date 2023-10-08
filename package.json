@@ -1,6 +1,6 @@
 {
   "name": "swig-cli-modules",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Groups of swig tasks for use in other projects",
   "repository": {
     "type": "git",
@@ -8,64 +8,74 @@
   },
   "type": "module",
   "exports": {
-    "./ConfigDockerCompose": {
+    "./types": {
       "import": {
-        "types": "./dist/esm/config/SwigDockerComposeConfig.d.ts",
-        "default": "./dist/esm/config/SwigDockerComposeConfig.js"
+        "types": "./dist/esm/types/index.d.ts",
+        "default": "./dist/esm/types/index.js"
       },
       "require": {
-        "types": "./dist/cjs/config/SwigDockerComposeConfig.d.ts",
-        "default": "./dist/cjs/config/SwigDockerComposeConfig.js"
+        "types": "./dist/cjs/types/index.d.ts",
+        "default": "./dist/cjs/types/index.js"
+      }
+    },
+    "./ConfigDockerCompose": {
+      "import": {
+        "types": "./dist/esm/config/singleton/DockerComposeConfigSingleton.d.ts",
+        "default": "./dist/esm/config/singleton/DockerComposeConfigSingleton.js"
+      },
+      "require": {
+        "types": "./dist/cjs/config/singleton/DockerComposeConfigSingleton.d.ts",
+        "default": "./dist/cjs/config/singleton/DockerComposeConfigSingleton.js"
       }
     },
     "./ConfigDotnetReactSandbox": {
       "import": {
-        "types": "./dist/esm/config/SwigDotnetReactSandboxConfig.d.ts",
-        "default": "./dist/esm/config/SwigDotnetReactSandboxConfig.js"
+        "types": "./dist/esm/config/singleton/DotnetReactSandboxConfigSingleton.d.ts",
+        "default": "./dist/esm/config/singleton/DotnetReactSandboxConfigSingleton.js"
       },
       "require": {
-        "types": "./dist/cjs/config/SwigDotnetReactSandboxConfig.d.ts",
-        "default": "./dist/cjs/config/SwigDotnetReactSandboxConfig.js"
+        "types": "./dist/cjs/config/singleton/DotnetReactSandboxConfigSingleton.d.ts",
+        "default": "./dist/cjs/config/singleton/DotnetReactSandboxConfigSingleton.js"
       }
     },
     "./ConfigEntityFramework": {
       "import": {
-        "types": "./dist/esm/config/SwigEntityFrameworkConfig.d.ts",
-        "default": "./dist/esm/config/SwigEntityFrameworkConfig.js"
+        "types": "./dist/esm/config/singleton/EntityFrameworkConfigSingleton.d.ts",
+        "default": "./dist/esm/config/singleton/EntityFrameworkConfigSingleton.js"
       },
       "require": {
-        "types": "./dist/cjs/config/SwigEntityFrameworkConfig.d.ts",
-        "default": "./dist/cjs/config/SwigEntityFrameworkConfig.js"
+        "types": "./dist/cjs/config/singleton/EntityFrameworkConfigSingleton.d.ts",
+        "default": "./dist/cjs/config/singleton/EntityFrameworkConfigSingleton.js"
       }
     },
     "./DockerCompose": {
       "import": {
-        "types": "./dist/esm/modules/DockerCompose/SwigDockerCompose.d.ts",
-        "default": "./dist/esm/modules/DockerCompose/SwigDockerCompose.js"
+        "types": "./dist/esm/modules/DockerCompose/DockerCompose.d.ts",
+        "default": "./dist/esm/modules/DockerCompose/DockerCompose.js"
       },
       "require": {
-        "types": "./dist/cjs/modules/DockerCompose/SwigDockerCompose.d.ts",
-        "default": "./dist/cjs/modules/DockerCompose/SwigDockerCompose.js"
+        "types": "./dist/cjs/modules/DockerCompose/DockerCompose.d.ts",
+        "default": "./dist/cjs/modules/DockerCompose/DockerCompose.js"
       }
     },
     "./DotnetReactSandbox": {
       "import": {
-        "types": "./dist/esm/modules/DotnetReactSandbox/SwigDotnetReactSandbox.d.ts",
-        "default": "./dist/esm/modules/DotnetReactSandbox/SwigDotnetReactSandbox.js"
+        "types": "./dist/esm/modules/DotnetReactSandbox/DotnetReactSandbox.d.ts",
+        "default": "./dist/esm/modules/DotnetReactSandbox/DotnetReactSandbox.js"
       },
       "require": {
-        "types": "./dist/cjs/modules/DotnetReactSandbox/SwigDotnetReactSandbox.d.ts",
-        "default": "./dist/cjs/modules/DotnetReactSandbox/SwigDotnetReactSandbox.js"
+        "types": "./dist/cjs/modules/DotnetReactSandbox/DotnetReactSandbox.d.ts",
+        "default": "./dist/cjs/modules/DotnetReactSandbox/DotnetReactSandbox.js"
       }
     },
     "./EntityFramework": {
       "import": {
-        "types": "./dist/esm/modules/EntityFramework/SwigEntityFramework.d.ts",
-        "default": "./dist/esm/modules/EntityFramework/SwigEntityFramework.js"
+        "types": "./dist/esm/modules/EntityFramework/EntityFramework.d.ts",
+        "default": "./dist/esm/modules/EntityFramework/EntityFramework.js"
       },
       "require": {
-        "types": "./dist/cjs/modules/EntityFramework/SwigEntityFramework.d.ts",
-        "default": "./dist/cjs/modules/EntityFramework/SwigEntityFramework.js"
+        "types": "./dist/cjs/modules/EntityFramework/EntityFramework.d.ts",
+        "default": "./dist/cjs/modules/EntityFramework/EntityFramework.js"
       }
     },
     "./utils": {
@@ -89,12 +99,16 @@
     "swig",
     "swig-cli",
     "swig-cli-modules",
-    "dotnet-react-sandbox"
+    "dotnet-react-sandbox",
+    "docker-compose",
+    "entity-framework",
+    "automation",
+    "dev-workflow"
   ],
   "author": "Mike Thompson",
   "license": "MIT",
   "dependencies": {
-    "@mikeyt23/node-cli-utils": "^2.0.3",
+    "@mikeyt23/node-cli-utils": "^2.0.6",
     "swig-cli": "^0.0.14"
   },
   "devDependencies": {

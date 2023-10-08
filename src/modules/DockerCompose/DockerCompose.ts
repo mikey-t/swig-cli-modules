@@ -1,5 +1,5 @@
 import { spawnDockerCompose } from '@mikeyt23/node-cli-utils'
-import config from '../../config/SwigDockerComposeConfig.js'
+import config from '../../config/singleton/DockerComposeConfigSingleton.js'
 import { getRequireSecondParam, isValidDockerContainerName } from '../../utils/generalUtils.js'
 
 export async function dockerUp() {
