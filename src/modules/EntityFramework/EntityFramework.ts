@@ -81,35 +81,44 @@ function getDbContextCliKeys() {
 }
 
 function getDbContextsToOperateOn(): DbContextConfig[] {
-  const additionalArg = process.argv[3]
+  const firstArg = process.argv[3]
+  const secondArg = process.argv[4]
 
-  if (!additionalArg) {
-    return config.dbContexts.filter(context => context.useWhenNoContextSpecified)
+  const contextsIfNotSpecified = config.dbContexts.filter(context => context.useWhenNoContextSpecified)
+
+  if (!firstArg) {
+    return contextsIfNotSpecified
   }
 
-  if (additionalArg === 'all') {
+  if (firstArg === 'all') {
     return config.dbContexts
   }
 
   const cliKeys = getDbContextCliKeys()
 
-  if (additionalArg && !cliKeys.includes(additionalArg)) {
-    throw new Error(`Unrecognized DbContext CLI key: ${additionalArg}`)
+  if (cliKeys.includes(firstArg)) {
+    return config.dbContexts.filter(context => context.cliKey === firstArg)
   }
 
-  if (additionalArg && cliKeys.includes(additionalArg)) {
-    return config.dbContexts.filter(context => context.cliKey === additionalArg)
+  // If 2 args passed, the first should be the DbContext CLI key and the second should be the migration name
+  if (secondArg) {
+    throw new Error(`Unrecognized DbContext CLI key: ${firstArg}`)
   }
 
-  throw new Error(`The config does not contain a DbContextConfig with CLI key ${additionalArg}`)
+  // Only one arg passed and it's not one of the available CLI keys - assume it's the migration name
+  return contextsIfNotSpecified
 }
 
 function getDbContextNamesToOperateOn(): string[] {
   return getDbContextsToOperateOn().map(context => context.name)
 }
 
-function getMigrationNameArg() {
+function getMigrationNameArg(): string | undefined {
   const migrationName = process.argv[4] || process.argv[3]
+  // If only one arg is passed it can be the CLI key of the context to use instead of the migration name
+  if (!process.argv[4] && (migrationName === 'all' || getDbContextCliKeys().includes(migrationName))) {
+    return undefined
+  }
   return migrationName && !getDbContextCliKeys().includes(migrationName) ? migrationName : undefined
 }
 
