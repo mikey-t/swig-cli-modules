@@ -83,7 +83,7 @@ export async function watchEsm() {
   await spawnAsyncLongRunning('node', [tscPath, '--p', 'tsconfig.esm.json', '--watch'])
 }
 
-export const publish = series(lint, build, test, () => spawnAsync('npm', ['publish'], { throwOnNonZero: true }))
+export const publish = series(lint, build, test, () => spawnAsync('npm', ['publish', '--registry=https://registry.npmjs.org/'], { throwOnNonZero: true }))
 
 async function buildEsm() {
   log('Building ESM')

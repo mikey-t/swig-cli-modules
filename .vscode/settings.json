@@ -12,6 +12,7 @@
     "javascript.format.semicolons": "remove",
     "typescript.format.semicolons": "remove",
     "cSpell.words": [
+      "ASPNETCORE",
       "lcov",
       "nodb"
     ]

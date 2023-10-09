@@ -14,6 +14,8 @@ import { conditionally, getRequireSecondParam } from '../../utils/generalUtils.j
 import * as swigDocker from '../DockerCompose/DockerCompose.js'
 import * as swigEf from '../EntityFramework/EntityFramework.js'
 
+nodeCliUtils.config.useWslPrefixForDockerCommands = nodeCliUtils.isPlatformWindows()
+
 export const setup = series(
   syncEnvFiles,
   checkDependenciesForSetup,
