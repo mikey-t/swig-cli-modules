@@ -1,7 +1,7 @@
 {
-    "recommendations": [
-        "dbaeumer.vscode-eslint",
-        "EditorConfig.EditorConfig",
-        "vscode-icons-team.vscode-icons"
-    ]
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "EditorConfig.EditorConfig",
+    "vscode-icons-team.vscode-icons"
+  ]
 }

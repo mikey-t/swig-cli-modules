@@ -1,6 +1,6 @@
 import { isValidDockerContainerName, spawnDockerCompose } from '@mikeyt23/node-cli-utils/dockerUtils'
 import config from '../../config/singleton/DockerComposeConfigSingleton.js'
-import { getRequiredSwigTaskCliParam } from 'src/utils/swigCliModuleUtils.js'
+import { getRequiredSwigTaskCliParam } from '../../utils/swigCliModuleUtils.js'
 
 export async function dockerUp() {
   await spawnDockerCompose(config.dockerComposePath, 'up')

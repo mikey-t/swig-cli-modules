@@ -13,7 +13,7 @@ import config from '../../config/singleton/DotnetReactSandboxConfigSingleton.js'
 import * as swigDocker from '../DockerCompose/DockerCompose.js'
 import * as swigEf from '../EntityFramework/EntityFramework.js'
 import { deleteDockerComposeVolume } from '@mikeyt23/node-cli-utils/dockerUtils'
-import { getRequiredSwigTaskCliParam } from 'src/utils/swigCliModuleUtils.js'
+import { getRequiredSwigTaskCliParam } from '../../utils/swigCliModuleUtils.js'
 
 export const setup = series(
   syncEnvFiles,
