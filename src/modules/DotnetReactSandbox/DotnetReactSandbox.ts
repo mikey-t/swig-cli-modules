@@ -1,7 +1,7 @@
 // Project url: https://github.com/mikey-t/dotnet-react-sandbox
 
 import * as nodeCliUtils from '@mikeyt23/node-cli-utils'
-import { log } from '@mikeyt23/node-cli-utils'
+import { conditionallyAsync, log } from '@mikeyt23/node-cli-utils'
 import { StringBoolArray } from '@mikeyt23/node-cli-utils/DependencyChecker'
 import * as certUtils from '@mikeyt23/node-cli-utils/certUtils'
 import * as dotnetUtils from '@mikeyt23/node-cli-utils/dotnetUtils'
@@ -10,23 +10,22 @@ import fsp from 'node:fs/promises'
 import path from 'node:path'
 import { parallel, series } from 'swig-cli'
 import config from '../../config/singleton/DotnetReactSandboxConfigSingleton.js'
-import { conditionally, getRequireSecondParam } from '../../utils/generalUtils.js'
 import * as swigDocker from '../DockerCompose/DockerCompose.js'
 import * as swigEf from '../EntityFramework/EntityFramework.js'
-
-nodeCliUtils.config.useWslPrefixForDockerCommands = nodeCliUtils.isPlatformWindows()
+import { deleteDockerComposeVolume } from '@mikeyt23/node-cli-utils/dockerUtils'
+import { getRequiredSwigTaskCliParam } from 'src/utils/swigCliModuleUtils.js'
 
 export const setup = series(
   syncEnvFiles,
   checkDependenciesForSetup,
   setupCert,
   setupHostsEntry,
-  ['dockerUp', () => conditionally(!config.nodb, swigDocker.dockerUp)],
-  ['dbInitialCreate', () => conditionally(
+  ['dockerUp', () => conditionallyAsync(!config.nodb, swigDocker.dockerUp)],
+  ['dbInitialCreate', () => conditionallyAsync(
     !config.nodb,
     () => nodeCliUtils.withRetryAsync(() => dbMigratorCliCommand('dbInitialCreate'), 5, 3000, { initialDelayMilliseconds: 10000, functionLabel: 'dbInitialCreate' }))
   ],
-  ['dbMigrate', () => conditionally(!config.nodb, () => swigEf.executeEfAction('update', ['main', 'test']))]
+  ['dbMigrate', () => conditionallyAsync(!config.nodb, () => swigEf.executeEfAction('update', ['main', 'test']))]
 )
 
 export const setupStatus = series(
@@ -125,12 +124,12 @@ export async function deleteEnvCopies() {
 }
 
 export async function generateCert() {
-  const url = getRequireSecondParam('Missing param to be used for cert url. Example: swig generateCert local.acme.com')
+  const url = getRequiredSwigTaskCliParam(0, 'Missing param to be used for cert url. Example: swig generateCert local.acme.com')
   await certUtils.generateCertWithOpenSsl(url)
 }
 
 export async function winInstallCert() {
-  const url = getRequireSecondParam('Missing param to be used for cert url. Example: swig winInstallCert local.acme.com')
+  const url = getRequiredSwigTaskCliParam(0, 'Missing param to be used for cert url. Example: swig winInstallCert local.acme.com')
   let certPath = path.join('./cert/', `${url}.pfx`)
   if (fs.existsSync(certPath)) {
     log(`using cert file at path ${certPath}`)
@@ -143,7 +142,7 @@ export async function winInstallCert() {
 }
 
 export async function winUninstallCert() {
-  const certSubject = getRequireSecondParam('Missing param to be used for cert url. Example: swig winUninstallCert local.acme.com')
+  const certSubject = getRequiredSwigTaskCliParam(0, 'Missing param to be used for cert url. Example: swig winUninstallCert local.acme.com')
   await certUtils.winUninstallCert(certSubject)
 }
 
@@ -315,9 +314,17 @@ async function teardownDb() {
     log('"nodb" option recognized - skipping DB teardown')
     return
   }
-  if (!await nodeCliUtils.getConfirmation(`Do you want to completely destroy your database? (this will delete './docker/pg')`)) {
+  if (!await nodeCliUtils.getConfirmation(`Do you want to completely destroy your database permanently? ${nodeCliUtils.Emoji.Scull}`)) {
     return
   }
+
   await swigDocker.dockerDown()
-  await nodeCliUtils.emptyDirectory('docker/pg')
+
+  // Older versions used a bind mount located at ./docker/pg - delete it if it exists there
+  if (fs.existsSync('./docker/pg')) {
+    await nodeCliUtils.emptyDirectory('docker/pg')
+  }
+
+  // Newer versions use a docker volume
+  await deleteDockerComposeVolume('postgresql_data')
 }

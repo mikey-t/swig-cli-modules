@@ -1,6 +1,6 @@
-import { spawnDockerCompose } from '@mikeyt23/node-cli-utils'
+import { isValidDockerContainerName, spawnDockerCompose } from '@mikeyt23/node-cli-utils/dockerUtils'
 import config from '../../config/singleton/DockerComposeConfigSingleton.js'
-import { getRequireSecondParam, isValidDockerContainerName } from '../../utils/generalUtils.js'
+import { getRequiredSwigTaskCliParam } from 'src/utils/swigCliModuleUtils.js'
 
 export async function dockerUp() {
   await spawnDockerCompose(config.dockerComposePath, 'up')
@@ -20,7 +20,7 @@ export async function bashIntoContainer(containerName?: string) {
 }
 
 function getContainerNameFromCliParam() {
-  const containerNameCliParam = getRequireSecondParam('Missing param for which container to bash into - example: swig bashIntoContainer postgresql')
+  const containerNameCliParam = getRequiredSwigTaskCliParam(0, 'Missing param for which container to bash into - example: swig bashIntoContainer postgresql')
   if (!isValidDockerContainerName) {
     throw new Error(`Container name is invalid: ${containerNameCliParam}`)
   }

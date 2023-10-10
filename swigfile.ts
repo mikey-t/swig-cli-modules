@@ -22,7 +22,7 @@ export const buildEsmOnly = series(cleanDist, buildEsm)
 export const buildCjsOnly = series(cleanDist, buildCjs)
 
 export async function lint() {
-  await spawnAsync('node', [eslintPath, '--ext', '.ts', './src', './test'], { throwOnNonZero: true })
+  await spawnAsync('node', [eslintPath, '--ext', '.ts', './src', './test', './swigfile.ts'], { throwOnNonZero: true })
 }
 
 export async function cleanDist() {

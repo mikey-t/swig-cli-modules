@@ -1,2 +1,2 @@
-export * from './generalUtils.js'
+export * from './swigCliModuleUtils.js'
 export * from './ProjectSetupUtil.js'
