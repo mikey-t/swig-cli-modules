@@ -40,6 +40,8 @@ export class DotnetReactSandboxConfig {
   private readonly _swigDockerConfig: DockerComposeConfig = dockerConfig
   private readonly _efConfig: EntityFrameworkConfig = config
 
+  private _eslintPath = './node_modules/eslint/bin/eslint.js'
+
   constructor() {
     this.populateCommonCliArgs()
     this._efConfig.init(this._dbMigratorPath, [
@@ -166,6 +168,10 @@ export class DotnetReactSandboxConfig {
 
   get nodb(): boolean {
     return this._noDb
+  }
+  
+  get eslintPath(): string {
+    return this._eslintPath
   }
 
   toJSON = () => classToJson(this)

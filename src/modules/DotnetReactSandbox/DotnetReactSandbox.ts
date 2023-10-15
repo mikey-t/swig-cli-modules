@@ -154,6 +154,8 @@ export async function showConfig() {
   console.log(JSON.stringify(config, null, 2))
 }
 
+export const lint = parallel(lintRoot, lintClient)
+
 // End exported functions //
 //**************************
 // Start helper functions //
@@ -327,4 +329,12 @@ async function teardownDb() {
 
   // Newer versions use a docker volume
   await deleteDockerComposeVolume('postgresql_data')
+}
+
+async function lintRoot() {
+  await nodeCliUtils.spawnAsync('node', [config.eslintPath, './swigfile.ts'], { throwOnNonZero: true })
+}
+
+async function lintClient() {
+  await nodeCliUtils.spawnAsync('node', [config.eslintPath, '--ext', '.ts,.tsx', 'src/'], { throwOnNonZero: true, cwd: './client' })
 }
