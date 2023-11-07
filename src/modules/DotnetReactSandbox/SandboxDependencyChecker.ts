@@ -1,4 +1,4 @@
-import DependencyChecker, { StringBoolArray } from '@mikeyt23/node-cli-utils/DependencyChecker'
+import { DependencyChecker, StringBoolArray } from '@mikeyt23/node-cli-utils/DependencyChecker'
 
 export default class SandboxDependencyChecker extends DependencyChecker {
   constructor() {
