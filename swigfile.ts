@@ -78,12 +78,20 @@ export async function testCoverageAll() {
   await testCoverage(adminTestFiles)
 }
 
-export async function watchEsm() {
-  await cleanDist()
-  await spawnAsyncLongRunning('node', [tscPath, '--p', 'tsconfig.esm.json', '--watch'])
+export async function watch() {
+  await doWatch('tsconfig.esm.json')
+}
+
+export async function watchCjs() {
+  await doWatch('tsconfig.cjs.json')
 }
 
 export const publish = series(lint, build, test, () => spawnAsync('npm', ['publish', '--registry=https://registry.npmjs.org/'], { throwOnNonZero: true }))
+
+async function doWatch(tsconfig: string) {
+  await cleanDist()
+  await spawnAsyncLongRunning('node', [tscPath, '--p', tsconfig, '--watch'])
+}
 
 async function buildEsm() {
   log('Building ESM')

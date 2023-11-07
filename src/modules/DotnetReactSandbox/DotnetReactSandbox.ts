@@ -4,16 +4,17 @@ import * as nodeCliUtils from '@mikeyt23/node-cli-utils'
 import { conditionallyAsync, log } from '@mikeyt23/node-cli-utils'
 import { StringBoolArray } from '@mikeyt23/node-cli-utils/DependencyChecker'
 import * as certUtils from '@mikeyt23/node-cli-utils/certUtils'
+import { deleteDockerComposeVolume } from '@mikeyt23/node-cli-utils/dockerUtils'
 import * as dotnetUtils from '@mikeyt23/node-cli-utils/dotnetUtils'
 import fs from 'node:fs'
 import fsp from 'node:fs/promises'
 import path from 'node:path'
 import { parallel, series } from 'swig-cli'
 import config from '../../config/singleton/DotnetReactSandboxConfigSingleton.js'
+import { getRequiredSwigTaskCliParam } from '../../utils/swigCliModuleUtils.js'
 import * as swigDocker from '../DockerCompose/DockerCompose.js'
 import * as swigEf from '../EntityFramework/EntityFramework.js'
-import { deleteDockerComposeVolume } from '@mikeyt23/node-cli-utils/dockerUtils'
-import { getRequiredSwigTaskCliParam } from '../../utils/swigCliModuleUtils.js'
+import * as swigEfUtil from '../EntityFramework/EntityFrameworkUtils.js'
 
 export const setup = series(
   syncEnvFiles,
@@ -25,7 +26,7 @@ export const setup = series(
     !config.nodb,
     () => nodeCliUtils.withRetryAsync(() => dbMigratorCliCommand('dbInitialCreate'), 5, 3000, { initialDelayMilliseconds: 10000, functionLabel: 'dbInitialCreate' }))
   ],
-  ['dbMigrate', () => conditionallyAsync(!config.nodb, () => swigEf.executeEfAction('update', ['main', 'test']))]
+  ['dbMigrate', () => conditionallyAsync(!config.nodb, () => swigEfUtil.executeEfAction('update', ['main', 'test']))]
 )
 
 export const setupStatus = series(
@@ -65,10 +66,10 @@ export const dbInitialCreate = series(syncEnvFiles, ['dbInitialCreate', () => db
 export const dbDropAll = series(syncEnvFiles, ['dbDropAll', () => dbMigratorCliCommand('dbDropAll')])
 export const dbDropAndRecreate = series(syncEnvFiles, ['dbDropAndRecreate', () => dbMigratorCliCommand('dbDropAndRecreate')])
 
-export const dbListMigrations = series(syncEnvFiles, swigEf.listMigrations)
+export const dbListMigrations = series(syncEnvFiles, swigEf.dbListMigrations)
 export const dbMigrate = series(syncEnvFiles, swigEf.dbMigrate)
-export const dbAddMigration = series(syncEnvFiles, swigEf.addMigration)
-export const dbRemoveMigration = series(syncEnvFiles, swigEf.removeMigration)
+export const dbAddMigration = series(syncEnvFiles, swigEf.dbAddMigration)
+export const dbRemoveMigration = series(syncEnvFiles, swigEf.dbRemoveMigration)
 
 export const bashIntoDb = series(syncEnvFiles, ['bashIntoContainer', () => swigDocker.bashIntoContainer(config.dbContainerName)])
 

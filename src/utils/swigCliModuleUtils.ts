@@ -34,8 +34,11 @@ export function getRequiredSwigTaskCliParam(index: number, errorMessage: string)
  * Examples param retrieval:
  * 
  * ```javascript
- * const firstTaskParam = getSwigTaskCliParam(0) // Returns "taskParamOne"
- * const secondTaskParam = getSwigTaskCliParam(1) // Returns "taskParamTwo"
+ * // Returns "taskParamOne"
+ * const firstTaskParam = getSwigTaskCliParam(0)
+ * 
+ * // Returns "taskParamTwo"
+ * const secondTaskParam = getSwigTaskCliParam(1)
  * ```
  * 
  * @param index Zero based index for params starting at the param after the swig task name.

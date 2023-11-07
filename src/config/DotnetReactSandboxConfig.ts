@@ -169,7 +169,7 @@ export class DotnetReactSandboxConfig {
   get nodb(): boolean {
     return this._noDb
   }
-  
+
   get eslintPath(): string {
     return this._eslintPath
   }
