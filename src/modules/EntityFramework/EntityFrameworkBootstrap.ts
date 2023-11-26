@@ -68,7 +68,7 @@ export async function dbBootstrapMigrationsProject() {
     for (const ctx of dbContextsWithDbSetupType) {
       const dbSetupType = ctx.dbSetupType!.trim()
       logWithPrefix(`running: dotnet run -- bootstrap ${ctx.name} ${dbSetupType}`)
-      await spawnAsync('dotnet', ['run', '--', 'bootstrap', ctx.name, dbSetupType], { cwd: projectPath })
+      await spawnAsync('dotnet', ['run', '--', 'bootstrap', ctx.name, dbSetupType], { cwd: projectPath, throwOnNonZero: true })
     }
   } else {
     logWithPrefix(`no DbContext entries in the provided config specified the "dbSetupType" and will not be setup automatically - you can bootstrap these yourself using the generated console app's "bootstrap" command`)
