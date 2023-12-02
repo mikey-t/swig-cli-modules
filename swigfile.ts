@@ -6,8 +6,8 @@ import fsp from 'node:fs/promises'
 nodeCliUtilsConfig.traceEnabled = false
 
 const c8Path = './node_modules/c8/bin/c8.js'
-const loaderArgsTsx = ['--no-warnings', '--loader', 'tsx']
-const loaderArgsTsNode = ['--no-warnings', '--loader', 'ts-node/esm']
+const loaderArgsTsx = ['--no-warnings', '--import', 'tsx']
+const loaderArgsTsNode = ['--no-warnings', '--experimental-loader', 'ts-node/esm']
 const testFiles = [
   './test/Placeholder.test.ts'
 ]

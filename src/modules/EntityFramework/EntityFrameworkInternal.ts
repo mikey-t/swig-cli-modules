@@ -1,31 +1,39 @@
-import { Emoji, isValidDirName, log, trace } from '@mikeyt23/node-cli-utils'
+import { Emoji, isChildPath, isValidDirName, log, trace } from '@mikeyt23/node-cli-utils'
 import fs from 'node:fs'
 import fsp from 'node:fs/promises'
 import path from 'node:path'
-import { DbContextConfig } from '../../config/EntityFrameworkConfig.js'
+import { supportedDotnetSdkVersions } from '../../config/EntityFrameworkConfig.js'
 import config from '../../config/singleton/EntityFrameworkConfigSingleton.js'
+import { DbContextConfig } from './DbContextConfig.js'
 
-export function throwIfConfigInvalid(requireDbContexts = true) {
+export function throwIfConfigInvalid(requireDbContexts = true, requireDbMigrationsPath = true) {
+  const errorPrefix = '[SwigEntityFrameworkConfig error] '
   if (!config.initCalled) {
-    throw new Error(`You need to import the config singleton from "swig-cli-modules/ConfigEntityFramework" and call it's "init" function`)
+    throw new Error(`${errorPrefix}You need to import the config singleton from "swig-cli-modules/ConfigEntityFramework" and call it's "init" function`)
   }
   if (!config.dbMigrationsProjectPath) {
-    throw new Error('SwigEntityFrameworkConfig error - dbMigrationsProjectPath is required')
+    throw new Error(`${errorPrefix}dbMigrationsProjectPath is required`)
   }
-  if (!fs.existsSync(config.dbMigrationsProjectPath)) {
-    throw new Error(`SwigEntityFrameworkConfig error - dbMigrationsProjectPath path does not exist: ${config.dbMigrationsProjectPath}. Try running the swig task dbBootstrapMigrationsProject.`)
+  if (requireDbMigrationsPath && !fs.existsSync(config.dbMigrationsProjectPath)) {
+    throw new Error(`${errorPrefix}dbMigrationsProjectPath path does not exist: ${config.dbMigrationsProjectPath}. Try running the swig task dbBootstrapMigrationsProject.`)
+  }
+  if (!isChildPath(process.cwd(), config.dbMigrationsProjectPath)) {
+    throw new Error(`The config dbMigrationsProjectPath (${config.dbMigrationsProjectPath}) must be a child path of the current working directory`)
   }
   if (config.dbContexts?.length > 0) {
     for (const context of config.dbContexts) {
       if (context.scriptsSubdirectory !== undefined) {
         if (!isValidDirName(context.scriptsSubdirectory)) {
-          throw new Error(`An invalid path was specified for the "scriptsSubdirectory" property of the DbContext "${context.name}": ${context.scriptsSubdirectory}`)
+          throw new Error(`${errorPrefix}an invalid path was specified for the "scriptsSubdirectory" property of the DbContext "${context.name}": ${context.scriptsSubdirectory}`)
         }
       }
     }
   }
   if (requireDbContexts && config.dbContexts.length === 0) {
-    throw new Error('SwigEntityFrameworkConfig error - dbContexts must have at least one entry')
+    throw new Error(`${errorPrefix}dbContexts must have at least one entry`)
+  }
+  if (!config.dotnetSdkVersion || !supportedDotnetSdkVersions.includes(config.dotnetSdkVersion)) {
+    throw new Error(`${errorPrefix}unsupported dotnet SDK version specified: "${config.dotnetSdkVersion}". Only the following versions are supported: ${supportedDotnetSdkVersions.join(', ')}.`)
   }
 }
 

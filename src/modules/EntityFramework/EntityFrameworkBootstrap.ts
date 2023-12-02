@@ -1,15 +1,12 @@
-import { Emoji, isChildPath, log, mkdirp, spawnAsync } from '@mikeyt23/node-cli-utils'
-import { hasDotnetSdkGreaterThanOrEqualTo } from '@mikeyt23/node-cli-utils/DependencyChecker'
+import { Emoji, log, mkdirp, spawnAsync } from '@mikeyt23/node-cli-utils'
 import { cyan } from '@mikeyt23/node-cli-utils/colors'
-import { getLatestNugetPackageVersion } from '@mikeyt23/node-cli-utils/dotnetUtils'
+import { ensureDotnetTool, isSdkMajorVersionInstalled, sdkVersionToTfm } from '@mikeyt23/node-cli-utils/dotnetUtils'
 import fs from 'node:fs'
 import fsp, { readdir } from 'node:fs/promises'
 import path, { extname } from 'node:path'
 import config from '../../config/singleton/EntityFrameworkConfigSingleton.js'
 import { getRequiredSwigTaskCliParam } from '../../utils/swigCliModuleUtils.js'
 import { migratorProjectExists, throwIfConfigInvalid } from './EntityFrameworkInternal.js'
-
-const minDotnetVersion = 6
 
 export async function dbBootstrapMigrationsProject() {
   const projectPath = config.dbMigrationsProjectPath!
@@ -21,31 +18,33 @@ export async function dbBootstrapMigrationsProject() {
 
   await validateBeforeBootstrap()
 
-  // Note the specific use of dotnet 6 here. In the future this will probably need to support
-  // multiple versions once the db-migrations-dotnet project supports multiple dotnet versions.
-  const net6 = 'net6.0'
-  const frameworkVersionArgs = ['-f', net6]
+  logWithPrefix('ensuring dotnet-ef tool is installed')
+  await ensureDotnetTool('dotnet-ef', { dotnetMajorVersion: config.dotnetSdkVersion })
+
+  const tfm = sdkVersionToTfm(config.dotnetSdkVersion)
+
+  logWithPrefix(`using dotnet sdk version ${config.dotnetSdkVersion} (TFM: ${tfm})`)
+
+  const frameworkVersionArgs = ['-f', tfm]
 
   logWithPrefix(`spawning dotnet command to create new console app at ${projectPath}...`)
-  await spawnAsync('dotnet', ['new', 'console', '-o', projectPath, ...frameworkVersionArgs])
+  await spawnAsync('dotnet', ['new', 'console', '-o', projectPath, ...frameworkVersionArgs], { throwOnNonZero: true })
 
-  // Add dependency references
-  const efDesignPackageName = 'Microsoft.EntityFrameworkCore.Design'
   const dbMigrationsPackageName = 'MikeyT.DbMigrations'
-  logWithPrefix(`attempting to get version numbers for dependencies (latest version that supports the correct .net framework version)`)
-  const efDesignVersion = await getLatestNugetPackageVersion(efDesignPackageName, net6)
-  if (efDesignVersion == null) {
-    throw new Error(`Could not determine latest supported version of package ${efDesignPackageName}`)
+  logWithPrefix(`adding package MikeyT.DbMigrations`)
+  await spawnAsync('dotnet', ['add', 'package', dbMigrationsPackageName], { cwd: projectPath, throwOnNonZero: true })
+
+  const efDesignPackageName = 'Microsoft.EntityFrameworkCore.Design'
+  logWithPrefix(`determining which version of ${efDesignPackageName} is compatible by analyzing the new project's transitive dependencies`)
+  const transitiveDependenciesResult = await spawnAsync('dotnet', ['list', 'package', '--include-transitive', '--format', 'json'], { stdio: 'pipe', cwd: projectPath, throwOnNonZero: true })
+  const transitiveDependenciesJson = JSON.parse(transitiveDependenciesResult.stdout)
+  const efCoreVersion = transitiveDependenciesJson?.projects[0]?.frameworks[0]?.transitivePackages?.find((p: { id: string, resolvedVersion: string }) => p.id === 'Microsoft.EntityFrameworkCore')?.resolvedVersion
+  if (!efCoreVersion) {
+    throw new Error(`Could not determine the ${efDesignPackageName} to use based on the transitive dependency output: ${transitiveDependenciesResult.stdout}`)
   }
-  logWithPrefix(`using version ${efDesignVersion} for ${efDesignPackageName}`)
-  const dbMigrationsVersion = await getLatestNugetPackageVersion(dbMigrationsPackageName, net6)
-  if (dbMigrationsVersion == null) {
-    throw new Error(`Could not determine latest supported version of package ${efDesignPackageName}`)
-  }
-  logWithPrefix(`using version ${dbMigrationsVersion} for ${dbMigrationsPackageName}`)
-  logWithPrefix(`spawning dotnet commands to add references`)
-  await spawnAsync('dotnet', ['add', 'package', efDesignPackageName, '-v', efDesignVersion], { cwd: projectPath })
-  await spawnAsync('dotnet', ['add', 'package', dbMigrationsPackageName, '-v', dbMigrationsVersion], { cwd: projectPath })
+  const efDesignMajorVersion = efCoreVersion.split('.')[0]
+  logWithPrefix(`adding package ${efDesignPackageName} version ${efDesignMajorVersion}`)
+  await spawnAsync('dotnet', ['add', 'package', efDesignPackageName, '-v', `${efDesignMajorVersion}`], { cwd: projectPath })
 
   const scriptsDir = path.join(projectPath, 'Scripts')
   await mkdirp(path.join(projectPath, 'Migrations'))
@@ -74,7 +73,7 @@ export async function dbBootstrapMigrationsProject() {
     logWithPrefix(`no DbContext entries in the provided config specified the "dbSetupType" and will not be setup automatically - you can bootstrap these yourself using the generated console app's "bootstrap" command`)
   }
 
-  log(`${Emoji.Info} Reminder: ensure your new project has a .env file if necessary`)
+  logBootstrapFinishedMessage()
 }
 
 export async function dbBootstrapDbContext() {
@@ -99,21 +98,13 @@ function logWithPrefix(message: string) {
 }
 
 async function validateBeforeBootstrap() {
-  if (!config.dbMigrationsProjectPath) {
-    throw new Error(`The config dbMigrationsProjectPath was not set`)
-  }
-
-  if (!isChildPath(process.cwd(), config.dbMigrationsProjectPath)) {
-    throw new Error(`The config dbMigrationsProjectPath (${config.dbMigrationsProjectPath}) must be a child path of the current working directory`)
-  }
-
-  logWithPrefix(`verifying existence of dotnet >= ${minDotnetVersion}...`)
-  if (!await hasDotnetSdkGreaterThanOrEqualTo(minDotnetVersion)) {
-    logWithPrefix(`${Emoji.Stop} The necessary version of the dotnet SDK (${minDotnetVersion}) does not appear to be installed - exiting`)
+  throwIfConfigInvalid(false, false)
+  logWithPrefix(`verifying existence of dotnet ${config.dotnetSdkVersion}...`)
+  if (!await isSdkMajorVersionInstalled(config.dotnetSdkVersion)) {
+    logWithPrefix(`${Emoji.Stop} The necessary version of the dotnet SDK (${config.dotnetSdkVersion}) does not appear to be installed - exiting`)
     return
   }
   logWithPrefix(`${Emoji.GreenCheck} a valid version of the dotnet sdk appears to be installed`)
-
   logWithPrefix(`DbMigrator project name: ${config.dbMigrationsProjectName}`)
 }
 
@@ -183,3 +174,15 @@ const dbMigrationsCsprojAddition = `\n\n  <ItemGroup>
   <ItemGroup>
     <Content Include="Scripts/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>`
+
+function logBootstrapFinishedMessage() {
+  log(`${Emoji.Info} Next steps:`)
+  log(`  - Enable docker swig commands by re-exporting tasks in your swigfile: export * from 'swig-cli-modules/DockerCompose'`)
+  log(`  - Ensure you have a .env with the appropriate values`)
+  log(`  - Start docker: swig dockerUp`)
+  log(`  - Copy your .env to the new DB migrations project directory`)
+  log(`  - Initialize your databases and users: swig dbSetup`)
+  log(`  - Create an initial migration:`)
+  log(`    - swig dbAddMigration all Initial`)
+  log(`    - swig dbMigrate all`)
+}

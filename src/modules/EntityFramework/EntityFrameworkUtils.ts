@@ -1,7 +1,7 @@
-import { getConfirmation, log, requireString, requireValidPath, spawnAsync } from '@mikeyt23/node-cli-utils'
+import { Emoji, getConfirmation, log, requireString, requireValidPath, spawnAsync } from '@mikeyt23/node-cli-utils'
 import { dotnetBuild } from '@mikeyt23/node-cli-utils/dotnetUtils'
-import { DbContextConfig } from '../../config/EntityFrameworkConfig.js'
 import config from '../../config/singleton/EntityFrameworkConfigSingleton.js'
+import { DbContextConfig } from './DbContextConfig.js'
 import {
   addDbMigrationBoilerplate,
   deleteScriptFileIfEmpty,
@@ -57,11 +57,11 @@ export async function executeEfAction(action: 'list' | 'update' | 'add' | 'remov
         await efMigrationsList(migratorPath, context.name)
         break
       case 'update':
-        log(migrationName ? `Updating ➡️${context.name} to migration name: ${migrationName}` : `Updating ➡️${context.name} to latest migration`)
+        log(migrationName ? `Updating ➡️${context.name} to migration "${migrationName}"` : `Updating ➡️${context.name} to latest migration`)
         await efMigrationsUpdate(migratorPath, context.name, migrationName)
         break
       case 'add':
-        log(`adding migration ➡️${migrationName} to ➡️${context.name}`)
+        log(`adding migration "${migrationName}" to ➡️${context.name}`)
         await efAddMigration(migratorPath, context.name, migrationName!, true, context.scriptsSubdirectory)
         break
       case 'remove':
@@ -137,7 +137,7 @@ export async function efAddMigration(projectPath: string, dbContextName: string,
 export async function efRemoveLastMigration(projectPath: string, dbContextName: string, skipConfirm = false, scriptsSubdirectory?: string) {
   const lastMigrationName = await getLastMigrationName(projectPath, dbContextName)
 
-  if (!skipConfirm && !await getConfirmation(`Are you sure you want to remove the last migration: ➡️${lastMigrationName}?`)) {
+  if (!skipConfirm && !await getConfirmation(`Are you sure you want to remove the last migration: ${Emoji.Explosion}${lastMigrationName}?`)) {
     return
   }
 

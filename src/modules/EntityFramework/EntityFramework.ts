@@ -1,8 +1,14 @@
 import { Emoji, getConfirmation, log, spawnAsync } from '@mikeyt23/node-cli-utils'
+import { ensureDotnetTool } from '@mikeyt23/node-cli-utils/dotnetUtils'
 import { inspect } from 'node:util'
 import config from '../../config/singleton/EntityFrameworkConfigSingleton.js'
 import { getDbContextNamesForEfAction, getDbContextsForSetupCli, logDbCommandMessage, throwIfConfigInvalid } from './EntityFrameworkInternal.js'
 import { executeEfAction } from './EntityFrameworkUtils.js'
+
+export async function ensureDotnetEfToolInstalled() {
+  throwIfConfigInvalid(false)
+  await ensureDotnetTool('dotnet-ef', { dotnetMajorVersion: config.dotnetSdkVersion })
+}
 
 export async function dbListMigrations() {
   logDbCommandMessage('Listing migrations', getDbContextNamesForEfAction())

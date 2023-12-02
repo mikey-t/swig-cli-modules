@@ -73,7 +73,6 @@ export const dbRemoveMigration = series(syncEnvFiles, swigEf.dbRemoveMigration)
 
 export const bashIntoDb = series(syncEnvFiles, ['bashIntoContainer', () => swigDocker.bashIntoContainer(config.dbContainerName)])
 
-export const installOrUpdateDotnetEfTool = dotnetUtils.installOrUpdateDotnetEfTool
 export const configureDotnetDevCerts = dotnetUtils.configureDotnetDevCerts
 
 export async function deleteBuildAndRelease() {
