@@ -1,6 +1,6 @@
 {
   "name": "swig-cli-modules",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Groups of swig tasks for use in other projects",
   "repository": {
     "type": "git",
@@ -121,7 +121,7 @@
   "author": "Mike Thompson",
   "license": "MIT",
   "dependencies": {
-    "@mikeyt23/node-cli-utils": "file:../node-cli-utils/mikeyt23-node-cli-utils-2.0.20.tgz",
+    "@mikeyt23/node-cli-utils": "^2.0.21",
     "swig-cli": "^0.0.16"
   },
   "devDependencies": {
