@@ -1,3 +1,4 @@
+import { DotnetRuntimeIdentifier } from '@mikeyt23/node-cli-utils/dotnetUtils'
 import { basename } from 'node:path'
 import { DbContextConfig } from '../modules/EntityFramework/DbContextConfig.js'
 
@@ -12,11 +13,15 @@ export type SupportedDotnetSdkVersion = typeof supportedDotnetSdkVersionsImmutab
 export interface EntityFrameworkConfigOptions {
   /** Defaults to dotnet core `8` (`net8.0`). */
   dotnetSdkVersion: SupportedDotnetSdkVersion
+  /** Defaults to ['linux-x64', 'win-x64']. */
+  releaseRuntimeIds: DotnetRuntimeIdentifier[]
 }
 
 /**
- * Consumers of the library should use the singleton config object by importing from `swig-cli-modules/ConfigEntityFramework`
- * and then call it's `init` method.
+ * Library consumer instructions for swigfile:
+ * - Import the singleton config object from `swig-cli-modules/ConfigEntityFramework`
+ * - Call the config singleton object's `init` method
+ * - Re-export all from `swig-cli-modules/EntityFramework`
  */
 export class EntityFrameworkConfig {
   private _initCalled = false
@@ -24,6 +29,7 @@ export class EntityFrameworkConfig {
   private _dbMigrationsProjectName: string = ''
   private _dbContexts: DbContextConfig[] = []
   private _dotnetSdkVersion: SupportedDotnetSdkVersion = 8
+  private _releaseRuntimeIds: DotnetRuntimeIdentifier[] = ['linux-x64', 'win-x64']
 
   get dbMigrationsProjectPath(): string | undefined {
     return this._dbMigrationsProjectPath
@@ -33,16 +39,20 @@ export class EntityFrameworkConfig {
     return this._dbMigrationsProjectName
   }
 
-  get dbContexts() {
+  get dbContexts(): DbContextConfig[] {
     return this._dbContexts
   }
 
-  get initCalled() {
+  get initCalled(): boolean {
     return this._initCalled
   }
 
-  get dotnetSdkVersion() {
+  get dotnetSdkVersion(): SupportedDotnetSdkVersion {
     return this._dotnetSdkVersion
+  }
+
+  get releaseRuntimeIds(): DotnetRuntimeIdentifier[] {
+    return this._releaseRuntimeIds
   }
 
   /**
@@ -61,6 +71,9 @@ export class EntityFrameworkConfig {
     this._dbContexts = dbContexts
     if (options?.dotnetSdkVersion) {
       this._dotnetSdkVersion = options.dotnetSdkVersion
+    }
+    if (options?.releaseRuntimeIds) {
+      this._releaseRuntimeIds = options.releaseRuntimeIds
     }
   }
 }

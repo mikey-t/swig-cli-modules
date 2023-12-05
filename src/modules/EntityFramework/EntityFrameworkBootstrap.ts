@@ -172,7 +172,7 @@ const dbMigrationsCsprojAddition = `\n\n  <ItemGroup>
     <None Update=".env" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Scripts/**" CopyToOutputDirectory="PreserveNewest" />
+    <EmbeddedResource Include="Scripts/**" />
   </ItemGroup>`
 
 function logBootstrapFinishedMessage() {

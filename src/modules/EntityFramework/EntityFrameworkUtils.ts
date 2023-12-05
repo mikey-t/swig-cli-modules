@@ -108,7 +108,7 @@ export async function efMigrationsUpdate(projectPath: string, dbContextName: str
 }
 
 /**
- * 
+ * Wrapper function for `dotnet ef migrations add`.
  * @param projectPath The path to the project that contains the DbContext and Migration files
  * @param dbContextName The name of the DbContext class
  * @param migrationName The name of the migration to add
@@ -123,19 +123,25 @@ export async function efAddMigration(projectPath: string, dbContextName: string,
       await addDbMigrationBoilerplate(projectDirectory, dbContextName, migrationName, scriptsSubdirectory)
     } catch (error) {
       console.error(error)
+      console.log(`${Emoji.Explosion} Error occurred adding boilerplate - attempting to remove the newly added migration`)
       await efRemoveLastMigration(projectPath, dbContextName, true, scriptsSubdirectory)
     }
   }
 }
 
 /**
- * 
+ * Wrapper function for `dotnet ef migrations remove`.
  * @param projectPath The path to the project that contains the DbContext and Migration files
  * @param dbContextName The name of the DbContext class
  * @param skipConfirm If `true`, the user will not be prompted to confirm the removal of the last migration
  */
-export async function efRemoveLastMigration(projectPath: string, dbContextName: string, skipConfirm = false, scriptsSubdirectory?: string) {
+export async function efRemoveLastMigration(projectPath: string, dbContextName: string, skipConfirm = false, scriptsSubdirectory?: string): Promise<void> {
   const lastMigrationName = await getLastMigrationName(projectPath, dbContextName)
+
+  if (lastMigrationName === null) {
+    log(`${Emoji.Warning} there are no migrations for DbContext ${dbContextName} - skipping`)
+    return
+  }
 
   if (!skipConfirm && !await getConfirmation(`Are you sure you want to remove the last migration: ${Emoji.Explosion}${lastMigrationName}?`)) {
     return

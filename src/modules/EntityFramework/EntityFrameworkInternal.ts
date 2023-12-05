@@ -1,4 +1,4 @@
-import { Emoji, isChildPath, isValidDirName, log, trace } from '@mikeyt23/node-cli-utils'
+import { Emoji, isChildPath, isValidDirName, log, mkdirp, trace } from '@mikeyt23/node-cli-utils'
 import fs from 'node:fs'
 import fsp from 'node:fs/promises'
 import path from 'node:path'
@@ -93,7 +93,7 @@ export function getDbContextsForEfActionFromCliArgs(): DbContextConfig[] {
     throw new Error(`Unrecognized DbContext CLI key: ${firstArg}`)
   }
 
-  // Only one arg passed and it's not one of the available CLI keys - assume it's the migration name
+  // Only one arg passed and it's not one of the available CLI keys - assume it's the migration name and just return the defaults if none specified
   return contextsIfNotSpecified
 }
 
@@ -118,7 +118,7 @@ export function getDbContextsTraceString(contexts: DbContextConfig[]) {
   return contexts.map(context => '  ' + JSON.stringify(context)).join('\n')
 }
 
-export function getDbContextsForSetupCli(): DbContextConfig[] {
+export function getDbContextsForSetupFromCliArgs(): DbContextConfig[] {
   const firstArg = process.argv[3]
   const secondArg = process.argv[4]
 
@@ -163,7 +163,13 @@ export async function deleteScriptFileIfEmpty(scriptPath: string) {
   }
 }
 
-export async function getLastMigrationName(projectPath: string, dbContextName: string) {
+/**
+ * Get the name of the last migration, or `null` if there aren't any.
+ * @param projectPath Path to the DbMigrations C# Console app containing the migrations.
+ * @param dbContextName The full name of the DbContext class.
+ * @returns The name of the latest migration or `null` if there are none.
+ */
+export async function getLastMigrationName(projectPath: string, dbContextName: string): Promise<string | null> {
   const migrationsDirectory = getMigrationsDirectory(projectPath, dbContextName)
   const filenames = fs.readdirSync(migrationsDirectory)
   const migrationNames = filenames.filter(filename =>
@@ -176,6 +182,11 @@ export async function getLastMigrationName(projectPath: string, dbContextName: s
     const name = migrationName.substring(15)
     return { timestamp, name }
   })
+
+  if (migrationNames.length === 0) {
+    return null
+  }
+
   log(`Found migrations: ${migrationNamesWithTimestamps.map(m => m.name).join(', ')}`)
   log(`Found timestamps: ${migrationNamesWithTimestamps.map(m => m.timestamp).join(', ')}`)
   const sortedMigrationNames = [...migrationNamesWithTimestamps].sort((a, b) => a.timestamp.localeCompare(b.timestamp))
@@ -251,9 +262,14 @@ export async function addDbMigrationBoilerplate(projectDirectory: string, dbCont
 
   log(`Updated file with boilerplate - please ensure it is correct: 📄${cSharpMigrationFilePath}`)
 
-  const scriptsDir = `Scripts/${scriptsSubdirectory ? `${scriptsSubdirectory}/` : ''}`
-  const upScriptPath = path.join(projectDirectory, `${scriptsDir}${migrationName}.sql`)
-  const downScriptPath = path.join(projectDirectory, `${scriptsDir}${migrationName}_Down.sql`)
+  const scriptsRelativeDir = `Scripts/${scriptsSubdirectory ? `${scriptsSubdirectory}/` : ''}`
+  const scriptsDir = path.join(projectDirectory, scriptsRelativeDir)
+  if (!fs.existsSync(scriptsDir)) {
+    log(`creating missing scripts directory: ${scriptsDir}`)
+    await mkdirp(scriptsDir)
+  }
+  const upScriptPath = path.join(projectDirectory, `${scriptsRelativeDir}${migrationName}.sql`)
+  const downScriptPath = path.join(projectDirectory, `${scriptsRelativeDir}${migrationName}_Down.sql`)
 
   log('\nCreating corresponding empty sql files (no action will be taken if they already exist):')
   log(`  - 📄${upScriptPath}`)
