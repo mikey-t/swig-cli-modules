@@ -6,7 +6,7 @@ import fsp, { readdir } from 'node:fs/promises'
 import path, { extname } from 'node:path'
 import config from '../../config/singleton/EntityFrameworkConfigSingleton.js'
 import { getRequiredSwigTaskCliParam } from '../../utils/swigCliModuleUtils.js'
-import { migratorProjectExists, throwIfConfigInvalid } from './EntityFrameworkInternal.js'
+import { migratorProjectExists, runBeforeHooks, throwIfConfigInvalid } from './EntityFrameworkInternal.js'
 
 export async function dbBootstrapMigrationsProject() {
   const projectPath = config.dbMigrationsProjectPath!
@@ -59,7 +59,7 @@ export async function dbBootstrapMigrationsProject() {
   await updateBootstrappedCsproj()
   await updateBootstrappedProgramFile()
 
-  await tryAddingSolutionReference(projectPath)
+  const addedSolutionReference = await tryAddingSolutionReference(projectPath)
 
   const dbContextsWithDbSetupType = config.dbContexts.filter(c => c.dbSetupType !== undefined && c.dbSetupType.trim() !== '')
   if (dbContextsWithDbSetupType.length > 0) {
@@ -73,7 +73,7 @@ export async function dbBootstrapMigrationsProject() {
     logWithPrefix(`no DbContext entries in the provided config specified the "dbSetupType" and will not be setup automatically - you can bootstrap these yourself using the generated console app's "bootstrap" command`)
   }
 
-  logBootstrapFinishedMessage()
+  logBootstrapFinishedMessage(addedSolutionReference)
 }
 
 export async function dbBootstrapDbContext() {
@@ -81,6 +81,8 @@ export async function dbBootstrapDbContext() {
   const dbSetupTypeName = getRequiredSwigTaskCliParam(1, 'Missing second required param for the name of the DbSetup type (for example: PostgresSetup)')
 
   throwIfConfigInvalid(false)
+
+  await runBeforeHooks()
 
   await spawnAsync('dotnet', ['run', '--', 'bootstrap', contextName, dbSetupTypeName], { cwd: config.dbMigrationsProjectPath, throwOnNonZero: true })
 
@@ -155,17 +157,16 @@ async function updateBootstrappedCsproj() {
   await fsp.writeFile(csprojPath, newCsprojContent)
 }
 
+// Returns true if added, false otherwise
 async function tryAddingSolutionReference(projectPath: string) {
   const files = await readdir(process.cwd())
   const slnFiles = files.filter(file => extname(file) === '.sln')
-
   if (slnFiles.length !== 1) {
-    logWithPrefix(`${Emoji.Info} be sure to add a reference to the new project in your sln file ("dotnet sln add <project_path>")`)
-    return
+    return false
   }
-
   logWithPrefix('adding sln reference to the new project')
-  await spawnAsync('dotnet', ['sln', 'add', projectPath])
+  const result = await spawnAsync('dotnet', ['sln', 'add', projectPath])
+  return result.code === 1
 }
 
 const dbMigrationsCsprojAddition = `\n\n  <ItemGroup>
@@ -175,8 +176,11 @@ const dbMigrationsCsprojAddition = `\n\n  <ItemGroup>
     <EmbeddedResource Include="Scripts/**" />
   </ItemGroup>`
 
-function logBootstrapFinishedMessage() {
+function logBootstrapFinishedMessage(addedSolutionReference: boolean) {
   log(`${Emoji.Info} Next steps:`)
+  if (!addedSolutionReference) {
+    log(`  - Add a reference to the new project in your dotnet sln file ("dotnet sln add <project_path>")`)
+  }
   log(`  - Enable docker swig commands by re-exporting tasks in your swigfile: export * from 'swig-cli-modules/DockerCompose'`)
   log(`  - Ensure you have a .env with the appropriate values`)
   log(`  - Start docker: swig dockerUp`)

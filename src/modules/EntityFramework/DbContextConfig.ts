@@ -24,6 +24,8 @@ export interface DbContextConfig {
    * The full C# class name that inherits from `MikeyT.DbMigrations.DbSetup` and is used for the `dbSetup` and `dbTeardown`
    * commands. This class can be located within your DbMigrations project or the `MikeyT.DbMigrations` Nuget package, or any
    * project that is referenced by your DbMigrations project.
+   * 
+   * An example value for the MikeyT.DbMigrations.PostgresSetup type: `'PostgresSetup'`.
    */
   dbSetupType?: string
 

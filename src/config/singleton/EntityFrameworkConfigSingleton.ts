@@ -1,20 +1,30 @@
 import { EntityFrameworkConfig } from '../EntityFrameworkConfig.js'
 
 /**
- * Example setup:
+ * Example setup that also uses `DockerCompose` swig module:
  * 
  * @example
  * 
  * ```
- * import efConfig from 'swig-cli-modules/config/EntityFramework'
+ * import efConfig from 'swig-cli-modules/ConfigEntityFramework'
+ * 
+ * const dbMigrationsProjectPath = 'src/DbMigrations'
  * 
  * efConfig.init(
- *   './server/src/DbMigrator',
+ *   dbMigrationsProjectPath,
  *   [
- *     { name: 'MainDbContext', cliKey: 'main', useWhenNoContextSpecified: true },
- *     { name: 'TestDbContext', cliKey: 'test' }
+ *     {
+ *       name: 'MainDbContext',
+ *       cliKey: 'main',
+ *       dbSetupType: 'PostgresSetup',
+ *       useWhenNoContextSpecified: true
+ *     }
  *   ]
  * )
+ * 
+ * export * from 'swig-cli-modules/EntityFramework'
+ * export * from 'swig-cli-modules/DockerCompose'
+ * 
  * ```
  */
 const config = new EntityFrameworkConfig()

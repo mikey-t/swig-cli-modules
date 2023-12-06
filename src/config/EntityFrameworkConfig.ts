@@ -1,6 +1,7 @@
 import { DotnetRuntimeIdentifier } from '@mikeyt23/node-cli-utils/dotnetUtils'
 import { basename } from 'node:path'
 import { DbContextConfig } from '../modules/EntityFramework/DbContextConfig.js'
+import { FuncOrAsyncFunc } from '@mikeyt23/node-cli-utils'
 
 // Dev notes:
 // - Keep the init method light and avoid doing anything here that could prevent a swigfile from loading.
@@ -11,10 +12,15 @@ export const supportedDotnetSdkVersions: number[] = [...supportedDotnetSdkVersio
 export type SupportedDotnetSdkVersion = typeof supportedDotnetSdkVersionsImmutable[number]
 
 export interface EntityFrameworkConfigOptions {
-  /** Defaults to dotnet core `8` (`net8.0`). */
+  /** Defaults to dotnet core `8` (`net8.0`) if not specified. Supports `6`, `7` and `8` currently. */
   dotnetSdkVersion: SupportedDotnetSdkVersion
-  /** Defaults to ['linux-x64', 'win-x64']. */
+  /** Defaults to ['linux-x64', 'win-x64'] if not specified. */
   releaseRuntimeIds: DotnetRuntimeIdentifier[]
+  /**
+   * Optional. Any function references passed in will be executed once before each time any of the exported EF module swig tasks are executed.
+   * However, note that they will not be run for any of the optional functions exported from the `EntityFrameworkUtils` module except `executeEfAction`.
+   */
+  beforeHooks: FuncOrAsyncFunc<unknown>[]
 }
 
 /**
@@ -30,6 +36,7 @@ export class EntityFrameworkConfig {
   private _dbContexts: DbContextConfig[] = []
   private _dotnetSdkVersion: SupportedDotnetSdkVersion = 8
   private _releaseRuntimeIds: DotnetRuntimeIdentifier[] = ['linux-x64', 'win-x64']
+  private _beforeHooks: FuncOrAsyncFunc<unknown>[] = []
 
   get dbMigrationsProjectPath(): string | undefined {
     return this._dbMigrationsProjectPath
@@ -55,6 +62,10 @@ export class EntityFrameworkConfig {
     return this._releaseRuntimeIds
   }
 
+  get beforeHooks(): FuncOrAsyncFunc<unknown>[] {
+    return [...this._beforeHooks]
+  }
+
   /**
    * Import the config singleton from `swig-cli-modules/ConfigEntityFramework` and call this method to enable importing of
    * swig tasks related to DB migrations with EntityFramework.
@@ -74,6 +85,9 @@ export class EntityFrameworkConfig {
     }
     if (options?.releaseRuntimeIds) {
       this._releaseRuntimeIds = options.releaseRuntimeIds
+    }
+    if (options?.beforeHooks) {
+      this._beforeHooks = options.beforeHooks
     }
   }
 }

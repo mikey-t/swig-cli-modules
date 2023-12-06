@@ -313,3 +313,9 @@ using MikeyT.DbMigrations;
     }
 }
 `
+
+export async function runBeforeHooks() {
+  for (const hook of config.beforeHooks) {
+    await hook()
+  }
+}

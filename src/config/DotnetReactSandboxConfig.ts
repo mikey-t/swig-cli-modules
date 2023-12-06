@@ -1,11 +1,11 @@
-import ProjectSetupUtil from '../utils/ProjectSetupUtil.js'
+import { classToJson, getRequiredEnvVar } from '@mikeyt23/node-cli-utils'
+import { syncEnvFiles } from '../modules/DotnetReactSandbox/DotnetReactSandboxInternal.js'
 import SandboxDependencyChecker from '../modules/DotnetReactSandbox/SandboxDependencyChecker.js'
-import { getRequiredEnvVar } from '@mikeyt23/node-cli-utils'
+import ProjectSetupUtil from '../utils/ProjectSetupUtil.js'
 import { DockerComposeConfig } from './DockerComposeConfig.js'
 import { EntityFrameworkConfig } from './EntityFrameworkConfig.js'
 import dockerConfig from './singleton/DockerComposeConfigSingleton.js'
 import config from './singleton/EntityFrameworkConfigSingleton.js'
-import { classToJson } from '@mikeyt23/node-cli-utils'
 
 export class DotnetReactSandboxConfig {
   private _projectName = 'set_project_name_env_and_call_config_init'
@@ -16,7 +16,7 @@ export class DotnetReactSandboxConfig {
   private _serverPath = './server/src/WebServer'
   private _serverTestPath = `./server/src/WebServer.Test`
   private _clientPath = './client'
-  private _dbMigratorPath = 'server/src/DbMigrator/'
+  private _dbMigrationsProjectPath = 'server/src/DbMigrations'
   private _dbContainerName = 'postgresql'
 
   private _releaseTarballName: string = `set_project_name_env_and_call_config_init`
@@ -27,27 +27,35 @@ export class DotnetReactSandboxConfig {
   private _preDeployHttpPort = '3001'
   private _mainDbContextName = 'MainDbContext'
   private _testDbContextName = 'TestDbContext'
-  private _directoriesWithEnv = [this._serverPath, this._clientPath, this._serverTestPath, this._dbMigratorPath, this._buildDir]
+  private _directoriesWithEnv = [this._serverPath, this._clientPath, this._serverTestPath, this._dbMigrationsProjectPath, this._buildDir]
 
   private _dependencyChecker: SandboxDependencyChecker | undefined
   private _projectSetupUtil: ProjectSetupUtil | undefined
 
-  loadEnvFunction: () => void = () => { throw new Error('You must set the required config value dotnetReactSandboxConfig.loadEnvFunction (for example, set it to "dotenv.config")') }
+  loadEnvFunction: () => void = () => { throw new Error('You must set the required config value dotnetReactSandboxConfig.loadEnvFunction (for example, import the dotenv package and set this to "dotenv.config")') }
 
   private _noDb: boolean = false
   private _siteUrl: string | undefined = undefined
 
-  private readonly _swigDockerConfig: DockerComposeConfig = dockerConfig
+  private readonly _dockerConfig: DockerComposeConfig = dockerConfig
   private readonly _efConfig: EntityFrameworkConfig = config
 
   private _eslintPath = './node_modules/eslint/bin/eslint.js'
 
   constructor() {
     this.populateCommonCliArgs()
-    this._efConfig.init(this._dbMigratorPath, [
-      { name: 'MainDbContext', cliKey: 'main', useWhenNoContextSpecified: true },
-      { name: 'TestDbContext', cliKey: 'test' }
-    ])
+    this._dockerConfig.addBeforeHook(() => syncEnvFiles())
+    this._efConfig.init(
+      this.dbMigrationsProjectPath,
+      [
+        { name: 'MainDbContext', cliKey: 'main', dbSetupType: 'PostgresSetup', useWhenNoContextSpecified: true },
+        { name: 'TestDbContext', cliKey: 'test', dbSetupType: 'PostgresSetup', useWhenNoContextSpecified: true }
+      ],
+      {
+        releaseRuntimeIds: ['linux-x64'],
+        beforeHooks: [() => syncEnvFiles()]
+      }
+    )
   }
 
   init(loadEnvFunction: () => void) {
@@ -92,8 +100,8 @@ export class DotnetReactSandboxConfig {
     return this._clientPath
   }
 
-  get dbMigratorPath() {
-    return this._dbMigratorPath
+  get dbMigrationsProjectPath() {
+    return this._dbMigrationsProjectPath
   }
 
   get dbContainerName() {
@@ -114,7 +122,7 @@ export class DotnetReactSandboxConfig {
 
   set dockerComposePath(value: string) {
     this._dockerComposePath = value
-    this._swigDockerConfig.dockerComposePath = value
+    this._dockerConfig.dockerComposePath = value
   }
 
   get serverCsprojPath() {

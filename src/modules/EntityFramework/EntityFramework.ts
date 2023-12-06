@@ -5,7 +5,7 @@ import fsp from 'node:fs/promises'
 import path from 'node:path'
 import { inspect } from 'node:util'
 import config from '../../config/singleton/EntityFrameworkConfigSingleton.js'
-import { getDbContextNamesForEfAction, getDbContextsForSetupFromCliArgs, logDbCommandMessage, throwIfConfigInvalid } from './EntityFrameworkInternal.js'
+import { getDbContextNamesForEfAction, getDbContextsForSetupFromCliArgs, logDbCommandMessage, runBeforeHooks, throwIfConfigInvalid } from './EntityFrameworkInternal.js'
 import { executeEfAction } from './EntityFrameworkUtils.js'
 
 export async function ensureDotnetEfToolInstalled() {
@@ -43,6 +43,8 @@ export async function dbSetup() {
 
   throwIfConfigInvalid()
 
+  await runBeforeHooks()
+
   log(`Running setup for DbContext(s):\n${dbContexts.map(c => `  ${c.name}`).join('\n')}`)
 
   for (const dbContext of dbContexts) {
@@ -59,6 +61,8 @@ export async function dbTeardown() {
   const dbContexts = getDbContextsForSetupFromCliArgs()
 
   throwIfConfigInvalid()
+
+  await runBeforeHooks()
 
   log(`Running teardown for DbContext(s):\n${dbContexts.map(c => `  ${c.name}`).join('\n')}`)
 
@@ -81,10 +85,8 @@ export async function dbShowConfig() {
     
 import efConfig from 'swig-cli-modules/ConfigEntityFramework'
 
-const dbMigrationsPath = 'src/DbMigrations'
-
 efConfig.init(
-  dbMigrationsPath,
+  'src/DbMigrations',
   [
     { name: 'MainDbContext', cliKey: 'main', dbSetupType: 'PostgresSetup', useWhenNoContextSpecified: true },
     { name: 'TestDbContext', cliKey: 'test', dbSetupType: 'PostgresSetup', useWhenNoContextSpecified: true }
@@ -103,6 +105,10 @@ efConfig.init(
 /**
  * Runs the dotnet ef bundle command. The project path and runtime id from config will be used in the command(s).
  * 
+ * CLI usage: `swig dbCreateRelease [<CLI_KEY>|all]`
+ * 
+ * Swigfile usage: import this function and pass the full DbContext name to dbContextNameOverride function param, which will be used instead of cli params.
+ * 
  * For each DbContext specified (or all that have `useWhenNoContextSpecified` set to `true`), generate a bundle for each of the runtime identifiers specified in the
  * ef config init call's optional `releaseRuntimeIds` param.
  * 
@@ -112,8 +118,10 @@ efConfig.init(
  * dotnet ef migrations bundle --project ./src/DbMigrations --context MainDbContext --self-contained -r win-x64 -o ./release/MigrateMainDbContext-win-x64.exe --force
  * ```
  */
-export async function dbCreateRelease() {
+export async function dbCreateRelease(dbContextNameOverride?: string) {
   throwIfConfigInvalid()
+
+  await runBeforeHooks()
 
   if (!config.releaseRuntimeIds || config.releaseRuntimeIds.length === 0) {
     throw new Error(`Config is missing releaseRuntimeIds`)
@@ -123,8 +131,8 @@ export async function dbCreateRelease() {
     throw new Error(`Config for releaseRuntimeIds contains invalid runtime ids: ${invalidRuntimeIds.join(', ')}`)
   }
 
-  const contexts = getDbContextsForSetupFromCliArgs()
-  
+  const contexts = dbContextNameOverride ? config.dbContexts.filter(c => c.name === dbContextNameOverride) : getDbContextsForSetupFromCliArgs()
+
   if (contexts.length === 0) {
     log(`${Emoji.Info} No DbContext matched your params - do one of the following:`)
     log(`  - Change your swig config so that at least one of the DbContext entries has 'useWhenNoContextSpecified' set to true, and pass no extra params to this task`)
@@ -133,7 +141,7 @@ export async function dbCreateRelease() {
     log(`  - Pass the full DbContext class name for a single DbContext to operate on`)
     throw new Error(`Invalid params`)
   }
-  
+
   logDbCommandMessage('Creating bundles', contexts.map(context => context.name))
 
   const releaseDir = 'release'

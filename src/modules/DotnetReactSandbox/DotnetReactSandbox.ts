@@ -1,7 +1,7 @@
 // Project url: https://github.com/mikey-t/dotnet-react-sandbox
 
 import * as nodeCliUtils from '@mikeyt23/node-cli-utils'
-import { conditionallyAsync, log } from '@mikeyt23/node-cli-utils'
+import { log } from '@mikeyt23/node-cli-utils'
 import { StringBoolArray } from '@mikeyt23/node-cli-utils/DependencyChecker'
 import * as certUtils from '@mikeyt23/node-cli-utils/certUtils'
 import { deleteDockerComposeVolume } from '@mikeyt23/node-cli-utils/dockerUtils'
@@ -14,24 +14,28 @@ import config from '../../config/singleton/DotnetReactSandboxConfigSingleton.js'
 import { getRequiredSwigTaskCliParam } from '../../utils/swigCliModuleUtils.js'
 import * as swigDocker from '../DockerCompose/DockerCompose.js'
 import * as swigEf from '../EntityFramework/EntityFramework.js'
-import * as swigEfUtil from '../EntityFramework/EntityFrameworkUtils.js'
+import { syncEnvFiles } from './DotnetReactSandboxInternal.js'
+
+export * from '../DockerCompose/DockerCompose.js'
+export * from '../EntityFramework/EntityFramework.js'
+export { deleteEnvCopies, syncEnvFiles } from './DotnetReactSandboxInternal.js'
+
+export const setupStatus = series(
+  syncEnvFiles,
+  reportSetupStatus
+)
 
 export const setup = series(
   syncEnvFiles,
   checkDependenciesForSetup,
   setupCert,
   setupHostsEntry,
-  ['dockerUp', () => conditionallyAsync(!config.nodb, swigDocker.dockerUp)],
-  ['dbInitialCreate', () => conditionallyAsync(
+  ['dockerUp', () => nodeCliUtils.conditionallyAsync(!config.nodb, swigDocker.dockerUp)],
+  ['dbSetup', () => nodeCliUtils.conditionallyAsync(
     !config.nodb,
-    () => nodeCliUtils.withRetryAsync(() => dbMigratorCliCommand('dbInitialCreate'), 5, 3000, { initialDelayMilliseconds: 10000, functionLabel: 'dbInitialCreate' }))
+    () => nodeCliUtils.withRetryAsync(swigEf.dbSetup, 5, 3000, { initialDelayMilliseconds: 10000 }))
   ],
-  ['dbMigrate', () => conditionallyAsync(!config.nodb, () => swigEfUtil.executeEfAction('update', ['main', 'test']))]
-)
-
-export const setupStatus = series(
-  syncEnvFiles,
-  reportSetupStatus
+  ['dbMigrate', () => nodeCliUtils.conditionallyAsync(!config.nodb, swigEf.dbMigrate)]
 )
 
 export const teardown = series(
@@ -50,75 +54,21 @@ export const testServer = series(syncEnvFiles, doTestServer)
 export const buildClient = series(syncEnvFiles, doBuildClient)
 export const copyClientBuildOnly = doCopyClientBuild
 export const buildServer = series(syncEnvFiles, doBuildServer)
-export const createDbMigratorRelease = series(parallel(syncEnvFiles, ensureReleaseDir), doCreateDbMigratorRelease)
 export const buildAll = series(parallel(syncEnvFiles, ensureReleaseDir), parallel(doBuildClient, doBuildServer), doCopyClientBuild)
 
 export const runBuilt = series(syncEnvFiles, doRunBuilt)
 
-export const createRelease = parallel(series(buildAll, createReleaseTarball), doCreateDbMigratorRelease)
+export const createRelease = parallel(series(buildAll, createReleaseTarball), ['dbCreateRelease', () => swigEf.dbCreateRelease(config.mainDbContextName)])
 export const createReleaseTarballOnly = createReleaseTarball
 
-export const dockerUp = series(syncEnvFiles, ['dockerUp', swigDocker.dockerUp])
-export const dockerUpAttached = series(syncEnvFiles, ['dockerDown', swigDocker.dockerDown], ['dockerUpAttached', swigDocker.dockerUpAttached])
-export const dockerDown = series(syncEnvFiles, ['dockerUp', swigDocker.dockerDown])
-
-export const dbInitialCreate = series(syncEnvFiles, ['dbInitialCreate', () => dbMigratorCliCommand('dbInitialCreate')])
-export const dbDropAll = series(syncEnvFiles, ['dbDropAll', () => dbMigratorCliCommand('dbDropAll')])
-export const dbDropAndRecreate = series(syncEnvFiles, ['dbDropAndRecreate', () => dbMigratorCliCommand('dbDropAndRecreate')])
-
-export const dbListMigrations = series(syncEnvFiles, swigEf.dbListMigrations)
-export const dbMigrate = series(syncEnvFiles, swigEf.dbMigrate)
-export const dbAddMigration = series(syncEnvFiles, swigEf.dbAddMigration)
-export const dbRemoveMigration = series(syncEnvFiles, swigEf.dbRemoveMigration)
-
-export const bashIntoDb = series(syncEnvFiles, ['bashIntoContainer', () => swigDocker.bashIntoContainer(config.dbContainerName)])
+export const bashIntoDb = () => swigDocker.dockerBash(config.dbContainerName)
 
 export const configureDotnetDevCerts = dotnetUtils.configureDotnetDevCerts
 
 export async function deleteBuildAndRelease() {
-  const dirs = ['./build', './release']
-  for (const dir of dirs) {
+  for (const dir of ['./build', './release']) {
     if (fs.existsSync(dir)) {
       await fsp.rm(dir, { recursive: true })
-    }
-  }
-}
-
-// The syncEnvFiles method copies any new values from .env.template to .env and then copies .env to all directories in directoriesWithEnv array.
-// Values added directly to .env files in directoriesWithEnv will not be overwritten, but this is not recommended.
-// Instead, use your root .env file as the source of truth and never directly modify the others unless it's temporary.
-//
-// Use additional arg 'clean' to delete all the non-root .env copies before making new copies - useful for removing values that are no longer in the root .env file.
-export async function syncEnvFiles() {
-  const rootEnvPath = './.env'
-  if (process.argv[3] && process.argv[3] === 'clean') {
-    log(`syncEnvFiles called with 'clean' arg - deleting .env copies`)
-    await deleteEnvCopies()
-  }
-
-  await nodeCliUtils.copyNewEnvValues(`${rootEnvPath}.template`, rootEnvPath)
-
-  // Load env vars from root .env file into process.env in case this is the first run or if there are new vars copied over from .env.template.
-  config.loadEnvFunction()
-
-  await nodeCliUtils.ensureDirectory(config.buildWwwrootDir)
-  for (const dir of config.directoriesWithEnv) {
-    await nodeCliUtils.overwriteEnvFile(rootEnvPath, path.join(dir, '.env'), dir === config.serverTestPath)
-  }
-  await nodeCliUtils.copyModifiedEnv(
-    rootEnvPath,
-    `${config.serverTestPath}/.env`,
-    ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'],
-    { 'DB_NAME': `test_${process.env.DB_NAME || 'DB_NAME_MISSING_FROM_PROCESS_ENV'}` }
-  )
-}
-
-export async function deleteEnvCopies() {
-  for (const dir of config.directoriesWithEnv) {
-    const envPath = path.join(dir, '.env')
-    if (fs.existsSync(envPath)) {
-      log('deleting .env file at path', envPath)
-      await nodeCliUtils.deleteEnvIfExists(envPath)
     }
   }
 }
@@ -191,23 +141,6 @@ async function ensureReleaseDir() {
   await nodeCliUtils.ensureDirectory(config.releaseDir)
 }
 
-async function doBuildDbMigrator() {
-  const publishDir = path.join(config.dbMigratorPath, 'publish')
-  await dotnetUtils.dotnetPublish(config.dbMigratorPath, 'Release', publishDir)
-  await nodeCliUtils.deleteEnvIfExists(path.join(publishDir, '.env'))
-  return publishDir
-}
-
-async function doCreateDbMigratorRelease() {
-  const publishDir = await doBuildDbMigrator()
-  const tarballPath = path.join(config.releaseDir, config.dbMigratorTarballName)
-  if (fs.existsSync(tarballPath)) {
-    log(`deleting existing tarball before re-creating: ${tarballPath}`)
-    await fsp.unlink(tarballPath)
-  }
-  await nodeCliUtils.createTarball(publishDir, path.join(config.releaseDir, config.dbMigratorTarballName), { excludes: ['.env'] })
-}
-
 async function doCopyClientBuild() {
   await nodeCliUtils.copyDirectoryContents(path.join(config.clientPath, 'dist'), config.buildWwwrootDir)
 }
@@ -219,32 +152,6 @@ async function createReleaseTarball() {
     await fsp.unlink(tarballPath)
   }
   await nodeCliUtils.createTarball(config.buildDir, path.join(config.releaseDir, config.releaseTarballName), { excludes: ['.env'] })
-}
-
-type DbMigratorCommand = 'dbInitialCreate' | 'dbDropAll' | 'dbDropAndRecreate'
-
-async function dbMigratorCliCommand(command: DbMigratorCommand) {
-  if (command === 'dbInitialCreate') {
-    const result = await nodeCliUtils.spawnAsync('dotnet', ['run', '--project', config.dbMigratorPath, 'dbInitialCreate'])
-    if (result.code !== 0) {
-      throw new Error(`dbInitialCreate failed with exit code ${result.code}`)
-    }
-    return
-  }
-  if (command === 'dbDropAll' && await nodeCliUtils.getConfirmation('Are you sure you want to drop main and test databases and database user?')) {
-    await nodeCliUtils.spawnAsync('dotnet', ['run', '--project', config.dbMigratorPath, 'dbDropAll'], { throwOnNonZero: true })
-    return
-  }
-  if (command === 'dbDropAndRecreate') {
-    if (!await nodeCliUtils.getConfirmation('Are you sure you want to drop main and test databases and database user?')) {
-      return
-    } else {
-      await nodeCliUtils.spawnAsync('dotnet', ['run', '--project', config.dbMigratorPath, 'dbDropAll'], { throwOnNonZero: true })
-      await nodeCliUtils.spawnAsync('dotnet', ['run', '--project', config.dbMigratorPath, 'dbInitialCreate'], { throwOnNonZero: true })
-      return
-    }
-  }
-  throw new Error(`Unknown DbMigrator command: ${command}`)
 }
 
 async function doRunBuilt() {

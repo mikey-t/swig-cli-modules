@@ -11,6 +11,7 @@ import {
   getMigrationNameArg,
   getMigrationsProjectRelativePath,
   getScriptPath,
+  runBeforeHooks,
   throwIfConfigInvalid
 } from './EntityFrameworkInternal.js'
 
@@ -22,6 +23,9 @@ import {
  */
 export async function executeEfAction(action: 'list' | 'update' | 'add' | 'remove', dbContextOverrideCliKeys?: string[]) {
   throwIfConfigInvalid(true)
+  
+  await runBeforeHooks()
+  
   const migratorPath = config.dbMigrationsProjectPath!
 
   let contexts: DbContextConfig[] = []
