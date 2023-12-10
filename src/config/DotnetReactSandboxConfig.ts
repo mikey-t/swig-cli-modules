@@ -48,8 +48,8 @@ export class DotnetReactSandboxConfig {
     this._efConfig.init(
       this.dbMigrationsProjectPath,
       [
-        { name: 'MainDbContext', cliKey: 'main', dbSetupType: 'PostgresSetup', useWhenNoContextSpecified: true },
-        { name: 'TestDbContext', cliKey: 'test', dbSetupType: 'PostgresSetup', useWhenNoContextSpecified: true }
+        { name: 'MainDbContext', cliKey: 'main', dbSetupType: 'PostgresSetup' },
+        { name: 'TestDbContext', cliKey: 'test', dbSetupType: 'PostgresSetup' }
       ],
       {
         releaseRuntimeIds: ['linux-x64'],

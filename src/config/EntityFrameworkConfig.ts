@@ -14,11 +14,13 @@ export type SupportedDotnetSdkVersion = typeof supportedDotnetSdkVersionsImmutab
 export interface EntityFrameworkConfigOptions {
   /** Defaults to dotnet core `8` (`net8.0`) if not specified. Supports `6`, `7` and `8` currently. */
   dotnetSdkVersion: SupportedDotnetSdkVersion
+
   /** Defaults to ['linux-x64', 'win-x64'] if not specified. */
   releaseRuntimeIds: DotnetRuntimeIdentifier[]
+
   /**
    * Optional. Any function references passed in will be executed once before each time any of the exported EF module swig tasks are executed.
-   * However, note that they will not be run for any of the optional functions exported from the `EntityFrameworkUtils` module except `executeEfAction`.
+   * However, note that they will not be run for any of the optional functions exported from the `EntityFrameworkUtils` "sub-module" except `executeEfAction`.
    */
   beforeHooks: FuncOrAsyncFunc<unknown>[]
 }
@@ -80,14 +82,11 @@ export class EntityFrameworkConfig {
     this._dbMigrationsProjectPath = dbMigrationsProjectPath
     this._dbMigrationsProjectName = basename(this._dbMigrationsProjectPath)
     this._dbContexts = dbContexts
-    if (options?.dotnetSdkVersion) {
-      this._dotnetSdkVersion = options.dotnetSdkVersion
+    for (const dbContext of this._dbContexts) {
+      dbContext.useWhenNoContextSpecified = dbContext.useWhenNoContextSpecified ?? true
     }
-    if (options?.releaseRuntimeIds) {
-      this._releaseRuntimeIds = options.releaseRuntimeIds
-    }
-    if (options?.beforeHooks) {
-      this._beforeHooks = options.beforeHooks
-    }
+    this._dotnetSdkVersion = options?.dotnetSdkVersion ?? this._dotnetSdkVersion
+    this._releaseRuntimeIds = options?.releaseRuntimeIds ?? this._releaseRuntimeIds
+    this._beforeHooks = options?.beforeHooks ?? this._beforeHooks
   }
 }

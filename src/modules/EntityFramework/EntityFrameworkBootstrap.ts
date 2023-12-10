@@ -92,7 +92,7 @@ export async function dbBootstrapDbContext() {
 
 function getExampleDbContextConfig(contextName: string, dbSetupTypeName: string): string {
   const exampleCliKey = contextName.toLowerCase().replace('dbcontext', '')
-  return `{ name: '${contextName}', cliKey: '${exampleCliKey}', dbSetupType: '${dbSetupTypeName}', useWhenNoContextSpecified: true }`
+  return `{ name: '${contextName}', cliKey: '${exampleCliKey}', dbSetupType: '${dbSetupTypeName}' }`
 }
 
 function logWithPrefix(message: string) {

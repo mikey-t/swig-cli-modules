@@ -14,32 +14,42 @@ export async function ensureDotnetEfToolInstalled() {
 }
 
 export async function dbListMigrations() {
-  logDbCommandMessage('Listing migrations', getDbContextNamesForEfAction())
+  const dbContextNames = getDbContextNamesForEfAction()
+  throwIfNoDbContexts(dbContextNames)
+  logDbCommandMessage('Listing migrations', dbContextNames)
   await executeEfAction('list')
 }
 
 export async function dbMigrate() {
-  logDbCommandMessage('Updating database', getDbContextNamesForEfAction())
+  const dbContextNames = getDbContextNamesForEfAction()
+  throwIfNoDbContexts(dbContextNames)
+  logDbCommandMessage('Updating database', dbContextNames)
   await executeEfAction('update')
 }
 
 export async function dbAddMigration() {
-  logDbCommandMessage('Adding migration', getDbContextNamesForEfAction())
+  const dbContextNames = getDbContextNamesForEfAction()
+  throwIfNoDbContexts(dbContextNames)
+  logDbCommandMessage('Adding migration', dbContextNames)
   await executeEfAction('add')
 }
 
 export async function dbRemoveMigration() {
-  logDbCommandMessage('Removing last migration', getDbContextNamesForEfAction())
+  const dbContextNames = getDbContextNamesForEfAction()
+  throwIfNoDbContexts(dbContextNames)
+  logDbCommandMessage('Removing last migration', dbContextNames)
   await executeEfAction('remove')
 }
 
 export { dbBootstrapDbContext, dbBootstrapMigrationsProject } from './EntityFrameworkBootstrap.js'
 
 /**
- * Thin wrapper around "setup" command for C# console app that's using MikeyT.DbMigrations DbSetupCli. Pass space separated DbContext names (or cli keys from config) to operate on.
+ * Thin wrapper around "setup" command for C# console app that's using MikeyT.DbMigrations DbSetupCli. Pass space separated DbContext names
+ * (or cli keys from config) to operate on (or no extra params to operate on all DbContexts that don't have "useWhenNoContextSpecified" to false).
  */
 export async function dbSetup() {
   const dbContexts = getDbContextsForSetupFromCliArgs()
+  throwIfNoDbContexts(dbContexts)
 
   throwIfConfigInvalid()
 
@@ -55,10 +65,12 @@ export async function dbSetup() {
 }
 
 /**
- * Thin wrapper around "teardown" command for C# console app that's using MikeyT.DbMigrations DbSetupCli. Pass space separated DbContext names (or cli keys from config) to operate on.
+ * Thin wrapper around "teardown" command for C# console app that's using MikeyT.DbMigrations DbSetupCli. Pass space separated DbContext names
+ * (or cli keys from config) to operate on (or no extra params to operate on all DbContexts that don't have "useWhenNoContextSpecified" to false).
  */
 export async function dbTeardown() {
   const dbContexts = getDbContextsForSetupFromCliArgs()
+  throwIfNoDbContexts(dbContexts)
 
   throwIfConfigInvalid()
 
@@ -85,13 +97,9 @@ export async function dbShowConfig() {
     
 import efConfig from 'swig-cli-modules/ConfigEntityFramework'
 
-efConfig.init(
-  'src/DbMigrations',
-  [
-    { name: 'MainDbContext', cliKey: 'main', dbSetupType: 'PostgresSetup', useWhenNoContextSpecified: true },
-    { name: 'TestDbContext', cliKey: 'test', dbSetupType: 'PostgresSetup', useWhenNoContextSpecified: true }
-  ]
-)
+efConfig.init('src/DbMigrations', [{ name: 'MainDbContext', cliKey: 'main', dbSetupType: 'PostgresSetup' }])
+
+export * from 'swig-cli-modules/EntityFramework'
 `
     throw new Error(err)
   }
@@ -132,15 +140,7 @@ export async function dbCreateRelease(dbContextNameOverride?: string) {
   }
 
   const contexts = dbContextNameOverride ? config.dbContexts.filter(c => c.name === dbContextNameOverride) : getDbContextsForSetupFromCliArgs()
-
-  if (contexts.length === 0) {
-    log(`${Emoji.Info} No DbContext matched your params - do one of the following:`)
-    log(`  - Change your swig config so that at least one of the DbContext entries has 'useWhenNoContextSpecified' set to true, and pass no extra params to this task`)
-    log(`  - Pass "all" as a single param after this task`)
-    log(`  - Pass the 'cliKey' value for a single DbContext to operate on (as specified in swig config)`)
-    log(`  - Pass the full DbContext class name for a single DbContext to operate on`)
-    throw new Error(`Invalid params`)
-  }
+  throwIfNoDbContexts(contexts)
 
   logDbCommandMessage('Creating bundles', contexts.map(context => context.name))
 
@@ -173,5 +173,16 @@ export async function dbCreateRelease(dbContextNameOverride?: string) {
 
       log(`${Emoji.GreenCheck} EF bundle generated: ${outputFile}`)
     }
+  }
+}
+
+function throwIfNoDbContexts(dbContexts: unknown[]) {
+  if (dbContexts.length === 0) {
+    log(`${Emoji.Info} No DbContext matched your params - do one of the following:`)
+    log(`  - Change your swig config so that at least one of the DbContext entries omits the 'useWhenNoContextSpecified' option (or sets to true), and pass no extra params to this task`)
+    log(`  - Pass "all" as a single param after this task`)
+    log(`  - Pass the 'cliKey' value for a single DbContext to operate on (as specified in swig config)`)
+    log(`  - Pass the full DbContext class name for a single DbContext to operate on`)
+    throw new Error(`No DbContexts to operate on`)
   }
 }

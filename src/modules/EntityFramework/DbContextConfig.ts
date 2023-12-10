@@ -14,9 +14,9 @@ export interface DbContextConfig {
   cliKey: string
 
   /**
-   * For certain commands (`dbMigrate`, `dbAddMigration`, `dbRemoveMigration`, `dbListMigrations`), this `DbContext` will
-   * be operated on if no context is specified. Multiple contexts can have this set to `true` to allow operating on multiple
-   * contexts with one CLI command.
+   * Defaults to `true` if not specified. For certain commands (`dbMigrate`, `dbAddMigration`, `dbRemoveMigration`, `dbListMigrations`),
+   * this `DbContext` will be operated on if no context is specified. Multiple contexts can have this set to `true` to allow operating
+   * on multiple contexts with one CLI command.
    */
   useWhenNoContextSpecified?: boolean
 

@@ -8,16 +8,13 @@ import { EntityFrameworkConfig } from '../EntityFrameworkConfig.js'
  * ```
  * import efConfig from 'swig-cli-modules/ConfigEntityFramework'
  * 
- * const dbMigrationsProjectPath = 'src/DbMigrations'
- * 
  * efConfig.init(
- *   dbMigrationsProjectPath,
+ *   'src/DbMigrations',
  *   [
  *     {
  *       name: 'MainDbContext',
  *       cliKey: 'main',
- *       dbSetupType: 'PostgresSetup',
- *       useWhenNoContextSpecified: true
+ *       dbSetupType: 'PostgresSetup'
  *     }
  *   ]
  * )

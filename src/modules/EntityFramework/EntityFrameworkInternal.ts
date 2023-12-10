@@ -126,7 +126,7 @@ export function getDbContextsForSetupFromCliArgs(): DbContextConfig[] {
 
   if (!firstArg) {
     if (contextsIfNotSpecified.length === 0) {
-      throw new Error(`If config does not have DbContexts with "useWhenNoContextSpecified" set to true, you must pass the name of the context(s) you would like to operate on`)
+      throw new Error(`If config does not have DbContexts with "useWhenNoContextSpecified" omitted or set to true, you must pass the name or cliKey of the context you would like to operate on, or "all"`)
     }
     return contextsIfNotSpecified
   }

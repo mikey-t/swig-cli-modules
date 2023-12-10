@@ -1,6 +1,6 @@
 {
   "name": "swig-cli-modules",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Groups of swig tasks for use in other projects",
   "repository": {
     "type": "git",
