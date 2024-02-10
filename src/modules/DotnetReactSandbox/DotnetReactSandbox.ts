@@ -239,9 +239,9 @@ async function teardownDb() {
 }
 
 async function lintRoot() {
-  await nodeCliUtils.spawnAsync('node', [config.eslintPath, './swigfile.ts'], { throwOnNonZero: true })
+  await nodeCliUtils.spawnAsync('node', [config.eslintPath, './swigfile.ts'])
 }
 
 async function lintClient() {
-  await nodeCliUtils.spawnAsync('node', [config.eslintPath, '--ext', '.ts,.tsx', 'src/'], { throwOnNonZero: true, cwd: './client' })
+  await nodeCliUtils.spawnAsync('node', [config.eslintPath, '--ext', '.ts,.tsx', 'src/'], { cwd: './client' })
 }

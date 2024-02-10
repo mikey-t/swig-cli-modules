@@ -58,7 +58,7 @@ export async function dbSetup() {
   log(`Running setup for DbContext(s):\n${dbContexts.map(c => `  ${c.name}`).join('\n')}`)
 
   for (const dbContext of dbContexts) {
-    await spawnAsync('dotnet', ['run', '--', 'setup', dbContext.name], { cwd: config.dbMigrationsProjectPath!, throwOnNonZero: true })
+    await spawnAsync('dotnet', ['run', '--', 'setup', dbContext.name], { cwd: config.dbMigrationsProjectPath! })
   }
 
   log(`${Emoji.GreenCheck} setup complete`)
@@ -82,7 +82,7 @@ export async function dbTeardown() {
     if (!await getConfirmation(`Are you sure you want to completely destroy the database for the DbContext "${dbContext.name}"`)) {
       continue
     }
-    await spawnAsync('dotnet', ['run', '--', 'teardown', dbContext.name], { cwd: config.dbMigrationsProjectPath!, throwOnNonZero: true })
+    await spawnAsync('dotnet', ['run', '--', 'teardown', dbContext.name], { cwd: config.dbMigrationsProjectPath! })
   }
 
   log(`${Emoji.GreenCheck} teardown complete`)

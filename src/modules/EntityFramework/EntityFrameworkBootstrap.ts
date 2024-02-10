@@ -28,15 +28,15 @@ export async function dbBootstrapMigrationsProject() {
   const frameworkVersionArgs = ['-f', tfm]
 
   logWithPrefix(`spawning dotnet command to create new console app at ${projectPath}...`)
-  await spawnAsync('dotnet', ['new', 'console', '-o', projectPath, ...frameworkVersionArgs], { throwOnNonZero: true })
+  await spawnAsync('dotnet', ['new', 'console', '-o', projectPath, ...frameworkVersionArgs])
 
   const dbMigrationsPackageName = 'MikeyT.DbMigrations'
   logWithPrefix(`adding package MikeyT.DbMigrations`)
-  await spawnAsync('dotnet', ['add', 'package', dbMigrationsPackageName], { cwd: projectPath, throwOnNonZero: true })
+  await spawnAsync('dotnet', ['add', 'package', dbMigrationsPackageName], { cwd: projectPath })
 
   const efDesignPackageName = 'Microsoft.EntityFrameworkCore.Design'
   logWithPrefix(`determining which version of ${efDesignPackageName} is compatible by analyzing the new project's transitive dependencies`)
-  const transitiveDependenciesResult = await spawnAsync('dotnet', ['list', 'package', '--include-transitive', '--format', 'json'], { stdio: 'pipe', cwd: projectPath, throwOnNonZero: true })
+  const transitiveDependenciesResult = await spawnAsync('dotnet', ['list', 'package', '--include-transitive', '--format', 'json'], { stdio: 'pipe', cwd: projectPath })
   const transitiveDependenciesJson = JSON.parse(transitiveDependenciesResult.stdout)
   const efCoreVersion = transitiveDependenciesJson?.projects[0]?.frameworks[0]?.transitivePackages?.find((p: { id: string, resolvedVersion: string }) => p.id === 'Microsoft.EntityFrameworkCore')?.resolvedVersion
   if (!efCoreVersion) {
@@ -67,7 +67,7 @@ export async function dbBootstrapMigrationsProject() {
     for (const ctx of dbContextsWithDbSetupType) {
       const dbSetupType = ctx.dbSetupType!.trim()
       logWithPrefix(`running: dotnet run -- bootstrap ${ctx.name} ${dbSetupType}`)
-      await spawnAsync('dotnet', ['run', '--', 'bootstrap', ctx.name, dbSetupType], { cwd: projectPath, throwOnNonZero: true })
+      await spawnAsync('dotnet', ['run', '--', 'bootstrap', ctx.name, dbSetupType], { cwd: projectPath })
     }
   } else {
     logWithPrefix(`no DbContext entries in the provided config specified the "dbSetupType" and will not be setup automatically - you can bootstrap these yourself using the generated console app's "bootstrap" command`)
@@ -84,7 +84,7 @@ export async function dbBootstrapDbContext() {
 
   await runBeforeHooks()
 
-  await spawnAsync('dotnet', ['run', '--', 'bootstrap', contextName, dbSetupTypeName], { cwd: config.dbMigrationsProjectPath, throwOnNonZero: true })
+  await spawnAsync('dotnet', ['run', '--', 'bootstrap', contextName, dbSetupTypeName], { cwd: config.dbMigrationsProjectPath })
 
   log(`\n${Emoji.Info} Reminder: update your swigfile with a new entry in the EntityFrameworkConfig init method's "dbContexts" param. Example DbContextConfig to add:\n`)
   log(getExampleDbContextConfig(contextName, dbSetupTypeName) + '\n')
