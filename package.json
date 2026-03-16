@@ -1,10 +1,10 @@
 {
   "name": "swig-cli-modules",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Groups of swig tasks for use in other projects",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mikey-t/swig-cli-modules"
+    "url": "git+https://github.com/mikey-t/swig-cli-modules.git"
   },
   "type": "module",
   "exports": {
@@ -121,20 +121,36 @@
   "author": "Mike Thompson",
   "license": "MIT",
   "dependencies": {
-    "@mikeyt23/node-cli-utils": "^2.0.33",
-    "swig-cli": "^0.0.16"
+    "@mikeyt23/node-cli-utils": "^2.0.36",
+    "swig-cli": "^1.0.5"
   },
   "devDependencies": {
-    "@types/node": "^20.11.17",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
-    "c8": "^9.1.0",
-    "eslint": "^8.56.0",
+    "@eslint/eslintrc": "^3.3.5",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24",
+    "@typescript-eslint/eslint-plugin": "^8.57.0",
+    "@typescript-eslint/parser": "^8.57.0",
+    "c8": "^11.0.0",
+    "eslint": "^10.0.3",
+    "globals": "^17.4.0",
     "ts-node": "^10.9.2",
-    "tsx": "^4.7.1",
-    "typescript": "^5.3.3"
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   },
-  "volta": {
-    "node": "20.10.0"
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "^24.14.0"
+    },
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^10.30.3",
+      "onFail": "ignore"
+    }
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

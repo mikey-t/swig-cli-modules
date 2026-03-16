@@ -28,7 +28,7 @@ export async function executeEfAction(action: 'list' | 'update' | 'add' | 'remov
   
   const migratorPath = config.dbMigrationsProjectPath!
 
-  let contexts: DbContextConfig[] = []
+  let contexts: DbContextConfig[]
 
   if (dbContextOverrideCliKeys && dbContextOverrideCliKeys.length > 0) {
     const overrideContexts = config.dbContexts.filter(context => dbContextOverrideCliKeys.includes(context.cliKey))

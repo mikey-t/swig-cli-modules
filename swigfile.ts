@@ -67,7 +67,8 @@ export async function watchCjs() {
   await doWatch('tsconfig.cjs.json')
 }
 
-export const publish = series(lint, build, test, () => spawnAsync('npm', ['publish', '--registry=https://registry.npmjs.org/']))
+// After running this and ready to publish, use "npm login" and then "npm publish --dry-run", then finally "npm publish"
+export const publishPrep = series(lint, build, test)
 
 async function doWatch(tsconfig: string) {
   await cleanDist()

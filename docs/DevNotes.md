@@ -17,6 +17,8 @@ Conventions for file names, directory structure and code divisions and exports:
 
 ## Development Pattern
 
+UPDATE: Volta is no longer being used - this section to be updated after next development cycle.
+
 To use npm link to develop swig module functionality:
 
 - Ensure current version of this project and version referenced are the same so npm link works correctly
@@ -32,6 +34,8 @@ Undo this setup:
 - In this project, run `npm unlink`
 
 ## Alternate to "npm link" For Multi-Chaining
+
+UPDATE: Volta is no longer being used - this section to be updated after next development cycle.
 
 Volta breaks chaining multiple packages such as `package-a` => `package-b` => `package-c`. Instead, run `npm pack` in `package-a`, reference `package-a` tarball in `package-b` package.json, then use `npm link` in `package-b`, then run `npm link package-b` in `package-c`.
 
