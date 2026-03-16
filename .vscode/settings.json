@@ -1,23 +1,19 @@
 {
-  "[typescript]": {
+  "[javascript][typescript]": {
     "editor.autoIndent": "full",
-    "editor.trimAutoWhitespace": false
+    "editor.trimAutoWhitespace": false,
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2
   },
-  "[javascript]": {
-    "editor.autoIndent": "full",
-    "editor.trimAutoWhitespace": false
-  },
-  "javascript.preferences.quoteStyle": "single",
-  "typescript.preferences.quoteStyle": "single",
-  "javascript.format.semicolons": "remove",
-  "typescript.format.semicolons": "remove",
+  "js/ts.preferences.quoteStyle": "single",
+  "js/ts.format.semicolons": "remove",
+  "js/ts.tsserver.experimental.enableProjectDiagnostics": true,
+  "js/ts.preferences.importModuleSpecifier": "relative",
   "cSpell.words": [
     "ASPNETCORE",
     "efbundle",
     "lcov",
     "nodb",
     "sqlserver"
-  ],
-  "typescript.preferences.importModuleSpecifier": "relative",
-  "javascript.preferences.importModuleSpecifier": "relative"
+  ]
 }
