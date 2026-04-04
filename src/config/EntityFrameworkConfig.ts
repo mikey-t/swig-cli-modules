@@ -7,12 +7,12 @@ import { FuncOrAsyncFunc } from '@mikeyt23/node-cli-utils'
 // - Keep the init method light and avoid doing anything here that could prevent a swigfile from loading.
 // - See EntityFramework.ts and EntityFrameworkInternal.ts for examples of config validation and use.
 
-const supportedDotnetSdkVersionsImmutable = [6, 7, 8] as const
+const supportedDotnetSdkVersionsImmutable = [6, 7, 8, 9, 10] as const
 export const supportedDotnetSdkVersions: number[] = [...supportedDotnetSdkVersionsImmutable]
 export type SupportedDotnetSdkVersion = typeof supportedDotnetSdkVersionsImmutable[number]
 
 export interface EntityFrameworkConfigOptions {
-  /** Defaults to dotnet core `8` (`net8.0`) if not specified. Supports `6`, `7` and `8` currently. */
+  /** Defaults to dotnet core `10` (`net10.0`) if not specified. Supports `6`, `7` and `8`, `9` and `10` currently. */
   dotnetSdkVersion: SupportedDotnetSdkVersion
 
   /** Defaults to ['linux-x64', 'win-x64'] if not specified. */
@@ -36,7 +36,7 @@ export class EntityFrameworkConfig {
   private _dbMigrationsProjectPath: string | undefined
   private _dbMigrationsProjectName: string = ''
   private _dbContexts: DbContextConfig[] = []
-  private _dotnetSdkVersion: SupportedDotnetSdkVersion = 8
+  private _dotnetSdkVersion: SupportedDotnetSdkVersion = 10
   private _releaseRuntimeIds: DotnetRuntimeIdentifier[] = ['linux-x64', 'win-x64']
   private _beforeHooks: FuncOrAsyncFunc<unknown>[] = []
 

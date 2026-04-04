@@ -70,6 +70,12 @@ export async function watchCjs() {
 // After running this and ready to publish, use "npm login" and then "npm publish --dry-run", then finally "npm publish"
 export const publishPrep = series(lint, build, test)
 
+// Example for referencing packed version in another project under development:
+// "swig-cli-modules": "file:../swig-cli-modules/swig-cli-modules-0.3.5-alpha.1.tgz"
+export async function pack() {
+  await spawnAsync('pnpm', ['pack'])
+}
+
 async function doWatch(tsconfig: string) {
   await cleanDist()
   await spawnAsyncLongRunning('node', [tscPath, '--p', tsconfig, '--watch'])

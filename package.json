@@ -1,6 +1,6 @@
 {
   "name": "swig-cli-modules",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "Groups of swig tasks for use in other projects",
   "repository": {
     "type": "git",
@@ -121,21 +121,21 @@
   "author": "Mike Thompson",
   "license": "MIT",
   "dependencies": {
-    "@mikeyt23/node-cli-utils": "^2.0.36",
+    "@mikeyt23/node-cli-utils": "^2.1.1",
     "swig-cli": "^1.0.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^10.0.1",
     "@types/node": "^24",
-    "@typescript-eslint/eslint-plugin": "^8.57.0",
-    "@typescript-eslint/parser": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^8.58.0",
+    "@typescript-eslint/parser": "^8.58.0",
     "c8": "^11.0.0",
-    "eslint": "^10.0.3",
+    "eslint": "^10.2.0",
     "globals": "^17.4.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   },
   "devEngines": {
     "runtime": {
@@ -144,7 +144,7 @@
     },
     "packageManager": {
       "name": "pnpm",
-      "version": "^10.32.1",
+      "version": "^10.33.0",
       "onFail": "ignore"
     }
   },

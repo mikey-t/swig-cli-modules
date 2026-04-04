@@ -13,7 +13,9 @@
     "strict": true,
     "skipLibCheck": true,
     "rootDir": "src",
-    "baseUrl": "."
+    "types": [
+      "node"
+    ]
   },
   "include": [
     "src/**/*.ts"

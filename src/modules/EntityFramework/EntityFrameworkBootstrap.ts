@@ -182,9 +182,8 @@ function logBootstrapFinishedMessage(addedSolutionReference: boolean) {
     log(`  - Add a reference to the new project in your dotnet sln file ("dotnet sln add <project_path>")`)
   }
   log(`  - Enable docker swig commands by re-exporting tasks in your swigfile: export * from 'swig-cli-modules/DockerCompose'`)
-  log(`  - Ensure you have a .env with the appropriate values`)
+  log(`  - Ensure you have a .env with the appropriate values in your current directory AND the new migrations project directory`)
   log(`  - Start docker: swig dockerUp`)
-  log(`  - Copy your .env to the new DB migrations project directory`)
   log(`  - Initialize your databases and users: swig dbSetup`)
   log(`  - Create an initial migration:`)
   log(`    - swig dbAddMigration all Initial`)
