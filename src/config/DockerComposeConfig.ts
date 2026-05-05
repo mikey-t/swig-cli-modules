@@ -1,7 +1,7 @@
 import { FuncOrAsyncFunc } from '@mikeyt23/node-cli-utils'
 
 export class DockerComposeConfig {
-  dockerComposePath: string = './docker-compose.yml'
+  dockerComposePath: string = './compose.yaml'
   private _beforeHooks: FuncOrAsyncFunc<unknown>[] = []
 
   get beforeHooks(): FuncOrAsyncFunc<unknown>[] {

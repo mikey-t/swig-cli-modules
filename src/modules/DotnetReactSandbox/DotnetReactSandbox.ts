@@ -30,6 +30,7 @@ export const setup = series(
   checkDependenciesForSetup,
   setupCert,
   setupHostsEntry,
+  ['dotnetToolRestore', () => nodeCliUtils.spawnAsync('dotnet', ['tool', 'restore'])],
   ['dockerUp', () => nodeCliUtils.conditionallyAsync(!config.nodb, swigDocker.dockerUp)],
   ['dbSetup', () => nodeCliUtils.conditionallyAsync(
     !config.nodb,

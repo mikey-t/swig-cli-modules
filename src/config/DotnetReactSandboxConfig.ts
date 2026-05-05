@@ -21,7 +21,7 @@ export class DotnetReactSandboxConfig {
 
   private _releaseTarballName: string = `set_project_name_env_and_call_config_init`
   private _dbMigratorTarballName = 'DbMigrator.tar.gz'
-  private _dockerComposePath = './docker-compose.yml'
+  private _dockerComposePath = './compose.yaml'
   private _serverCsprojPath = `${this._serverPath}/WebServer.csproj`
   private _preDeployHttpsPort = '3000'
   private _preDeployHttpPort = '3001'
