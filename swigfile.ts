@@ -4,6 +4,7 @@ import { parallel, series } from 'swig-cli'
 
 nodeCliUtilsConfig.traceEnabled = false
 
+const nodePath = process.execPath
 const c8Path = './node_modules/c8/bin/c8.js'
 const loaderArgsTsx = ['--no-warnings', '--import', 'tsx']
 const loaderArgsTsNode = ['--no-warnings', '--experimental-loader', 'ts-node/esm']
@@ -20,7 +21,7 @@ export const buildEsmOnly = series(cleanDist, buildEsm)
 export const buildCjsOnly = series(cleanDist, buildCjs)
 
 export async function lint() {
-  await spawnAsync('node', [eslintPath, '--ext', '.ts', './src', './test', './swigfile.ts'])
+  await spawnAsync(nodePath, [eslintPath, '--ext', '.ts', './src', './test', './swigfile.ts'])
 }
 
 export async function cleanDist() {
@@ -28,33 +29,33 @@ export async function cleanDist() {
 }
 
 export async function test() {
-  if ((await spawnAsync('node', [...loaderArgsTsx, '--test', ...testFiles], { throwOnNonZero: false })).code !== 0) {
+  if ((await spawnAsync(nodePath, [...loaderArgsTsx, '--test', ...testFiles], { throwOnNonZero: false })).code !== 0) {
     throw new Error('Tests failed')
   }
 }
 
 export async function testWatch() {
   const args = [...loaderArgsTsx, '--test', '--watch', ...testFiles]
-  await spawnAsyncLongRunning('node', args)
+  await spawnAsyncLongRunning(nodePath, args)
 }
 
 export async function testOnly() {
   const args = [...loaderArgsTsx, '--test-only', '--test', ...testFiles]
-  if ((await spawnAsync('node', args)).code !== 0) {
+  if ((await spawnAsync(nodePath, args)).code !== 0) {
     throw new Error('Tests failed')
   }
 }
 
 export async function testOnlyWatch() {
   const args = [...loaderArgsTsx, '--test-only', '--test', '--watch', ...testFiles]
-  if ((await spawnAsyncLongRunning('node', args)).code !== 0) {
+  if ((await spawnAsyncLongRunning(nodePath, args)).code !== 0) {
     throw new Error('Tests failed')
   }
 }
 
 export async function testCoverage(additionalTestFiles: string[] = []) {
-  const args = [c8Path, 'node', ...loaderArgsTsNode, '--test', ...testFiles, ...additionalTestFiles]
-  if ((await spawnAsync('node', args, { env: { ...process.env, NODE_V8_COVERAGE: './coverage' } })).code !== 0) {
+  const args = [c8Path, nodePath, ...loaderArgsTsNode, '--test', ...testFiles, ...additionalTestFiles]
+  if ((await spawnAsync(nodePath, args, { env: { ...process.env, NODE_V8_COVERAGE: './coverage' } })).code !== 0) {
     throw new Error('Tests failed')
   }
 }
@@ -78,17 +79,17 @@ export async function pack() {
 
 async function doWatch(tsconfig: string) {
   await cleanDist()
-  await spawnAsyncLongRunning('node', [tscPath, '--p', tsconfig, '--watch'])
+  await spawnAsyncLongRunning(nodePath, [tscPath, '--p', tsconfig, '--watch'])
 }
 
 async function buildEsm() {
   log('Building ESM')
-  await spawnAsync('node', [tscPath, '--p', 'tsconfig.esm.json'])
+  await spawnAsync(nodePath, [tscPath, '--p', 'tsconfig.esm.json'])
 }
 
 async function buildCjs() {
   log('Building CJS')
-  await spawnAsync('node', [tscPath, '--p', 'tsconfig.cjs.json'])
+  await spawnAsync(nodePath, [tscPath, '--p', 'tsconfig.cjs.json'])
 }
 
 async function copyCjsPackageJson() {

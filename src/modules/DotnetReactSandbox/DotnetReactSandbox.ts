@@ -20,6 +20,8 @@ export * from '../DockerCompose/DockerCompose.js'
 export * from '../EntityFramework/EntityFramework.js'
 export { deleteEnvCopies, syncEnvFiles } from './DotnetReactSandboxInternal.js'
 
+const nodePath = process.execPath
+
 export const setupStatus = series(
   syncEnvFiles,
   reportSetupStatus
@@ -118,9 +120,8 @@ async function runServer() {
 }
 
 async function runClient() {
-  const command = 'node'
   const args = ['./node_modules/vite/bin/vite.js', 'dev']
-  await nodeCliUtils.spawnAsyncLongRunning(command, args, config.clientPath)
+  await nodeCliUtils.spawnAsyncLongRunning(nodePath, args, config.clientPath)
 }
 
 async function doTestServer() {
@@ -240,9 +241,9 @@ async function teardownDb() {
 }
 
 async function lintRoot() {
-  await nodeCliUtils.spawnAsync('node', [config.eslintPath, './swigfile.ts'])
+  await nodeCliUtils.spawnAsync(nodePath, [config.eslintPath, './swigfile.ts'])
 }
 
 async function lintClient() {
-  await nodeCliUtils.spawnAsync('node', [config.eslintPath, '--ext', '.ts,.tsx', 'src/'], { cwd: './client' })
+  await nodeCliUtils.spawnAsync(nodePath, [config.eslintPath, '--ext', '.ts,.tsx', 'src/'], { cwd: './client' })
 }
